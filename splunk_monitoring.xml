@@ -1,0 +1,1046 @@
+<form version="1.1">
+  <label>Splunk Multisite Infrastructure Monitoring (DMC-Optimized)</label>
+  <description>DMC-optimized dashboard using server groups for precise targeting | Comprehensive monitoring for multisite on-premise Splunk infrastructure | Auto-refresh enabled</description>
+  
+  <!-- ============================== -->
+  <!-- FIELD SETS - INPUT CONTROLS    -->
+  <!-- ============================== -->
+  
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_token" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    
+    <input type="dropdown" token="site_token" searchWhenChanged="true">
+      <label>Site Filter</label>
+      <choice value="*">All Sites</choice>
+      <choice value="site1">Site 1</choice>
+      <choice value="site2">Site 2</choice>
+      <choice value="site3">Site 3</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    
+    <input type="dropdown" token="refresh_token" searchWhenChanged="true">
+      <label>Auto Refresh</label>
+      <choice value="0">Off</choice>
+      <choice value="300">5 Minutes</choice>
+      <choice value="600">10 Minutes</choice>
+      <choice value="900">15 Minutes</choice>
+      <default>300</default>
+      <initialValue>300</initialValue>
+    </input>
+  </fieldset>
+  
+  <!-- ============================== -->
+  <!-- BASE SEARCHES (Reusable)       -->
+  <!-- ============================== -->
+  
+  <!-- Base Search: Cluster Peers Information -->
+  <search id="base_cluster_peers">
+    <query>
+| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/peers
+| eval site=if(isnull(site),"unknown",site)
+| eval status_color=case(
+    status="Up","green",
+    status="Down","red", 
+    status="ReassigningPrimaries","yellow",
+    1=1,"orange"
+)
+| eval last_heartbeat_age=now()-last_heartbeat
+| eval is_searchable_text=if(is_searchable=1,"Yes","No")
+| search site=$site_token$
+| fields label, site, status, status_color, is_searchable, is_searchable_text, bucket_count, primary_count, replication_count, search_count, last_heartbeat_age
+    </query>
+    <earliest>$time_token.earliest$</earliest>
+    <latest>$time_token.latest$</latest>
+    <refresh>$refresh_token$</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  
+  <!-- Base Search: Search Head Cluster Members -->
+  <search id="base_shc_members">
+    <query>
+| rest splunk_server_group=dmc_group_search_head splunk_server=* /services/shcluster/member/members
+| eval site=if(isnull(site),"unknown",site)
+| eval is_captain_text=if(is_captain=1,"CAPTAIN","Member")
+| eval status_color=case(
+    status="Up","green",
+    status="Down","red",
+    1=1,"orange"
+)
+| eval last_heartbeat_age=now()-last_heartbeat
+| search site=$site_token$
+| fields label, site, status, status_color, is_captain_text, adhoc_searchhead, replication_count, last_heartbeat_age
+    </query>
+    <earliest>$time_token.earliest$</earliest>
+    <latest>$time_token.latest$</latest>
+    <refresh>$refresh_token$</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  
+  <!-- Base Search: License Usage -->
+  <search id="base_license_usage">
+    <query>
+index=_internal source=*license_usage.log type=Usage
+| eval gb=round(coalesce(tonumber(b),0)/1024/1024/1024,3)
+| timechart span=1d sum(gb) as daily_gb
+| appendcols [
+    | rest splunk_server_group=dmc_group_license_master splunk_server=* /services/licenser/pools
+    | head 1
+    | eval quota_gb=round(coalesce(tonumber(quota),0)/1024/1024/1024,2)
+    | fields quota_gb
+]
+| fillnull value=0 quota_gb
+| eval usage_pct=if(quota_gb>0,round((daily_gb/quota_gb)*100,2),0)
+| fields _time, daily_gb, quota_gb, usage_pct
+    </query>
+    <earliest>$time_token.earliest$</earliest>
+    <latest>$time_token.latest$</latest>
+    <refresh>900</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  
+  <!-- Base Search: System Introspection Metrics -->
+  <search id="base_introspection">
+    <query>
+index=_introspection component=Hostwide
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| eval cpu_pct=round(coalesce(tonumber('data.cpu_system_pct'),0),2)
+| eval mem_used_gb=round(coalesce(tonumber('data.mem_used'),0)/1024,2)
+| eval mem_pct=if(tonumber('data.mem')>0,round((tonumber('data.mem_used')/tonumber('data.mem'))*100,2),0)
+| fields _time, host, site, cpu_pct, mem_used_gb, mem_pct
+    </query>
+    <earliest>$time_token.earliest$</earliest>
+    <latest>$time_token.latest$</latest>
+    <refresh>$refresh_token$</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  
+  <!-- Base Search: Forwarder Connectivity -->
+  <search id="base_forwarders">
+    <query>
+| rest splunk_server_group=dmc_group_deployment_server splunk_server=* /services/deployment/server/clients
+| eval last_checkin_age=now()-lastPhoneHomeTime
+| eval status=case(
+    last_checkin_age &lt; 300, "Active",
+    last_checkin_age &lt; 900, "Warning",
+    1=1, "Critical"
+)
+| stats count by status
+    </query>
+    <earliest>$time_token.earliest$</earliest>
+    <latest>$time_token.latest$</latest>
+    <refresh>900</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  
+  <!-- ============================== -->
+  <!-- ROW 1: INFRASTRUCTURE OVERVIEW -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>Infrastructure Health Overview</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          High-level health metrics across all sites. Green = healthy, Yellow = warning, Red = critical.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Total Indexers</title>
+      <single>
+        <search base="base_cluster_peers">
+          <query>
+| stats dc(label) as total_indexers, count(eval(status="Up")) as up_count
+| eval display_text=up_count." / ".total_indexers." UP"
+| eval color=case(
+    up_count=total_indexers,"green",
+    up_count &gt;= total_indexers*0.8,"yellow",
+    1=1,"red"
+)
+| fields display_text, color
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Status</option>
+        <option name="useColors">1</option>
+        <option name="colorBy">value</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Total Search Heads</title>
+      <single>
+        <search base="base_shc_members">
+          <query>
+| stats dc(label) as total_sh, count(eval(status="Up")) as up_count
+| eval display_text=up_count." / ".total_sh." UP"
+| eval color=case(
+    up_count=total_sh,"green",
+    up_count &gt;= total_sh*0.8,"yellow",
+    1=1,"red"
+)
+| fields display_text, color
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Status</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Active Forwarders</title>
+      <single>
+        <search base="base_forwarders">
+          <query>
+| search status="Active"
+| fields count
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Connected</option>
+        <option name="rangeColors">["0xD93F3C","0xF7BC38","0x65A637"]</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>License Usage</title>
+      <single>
+        <search base="base_license_usage">
+          <query>
+| tail 1
+| eval range_value=case(
+    usage_pct &lt; 70, 1,
+    usage_pct &lt; 85, 2,
+    usage_pct &lt; 95, 3,
+    1=1, 4
+)
+| fields usage_pct, range_value
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="rangeValues">[0,70,85,95]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">% of Quota</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+        <option name="colorBy">value</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Cluster Health</title>
+      <single>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/health
+| eval health_status=case(
+    all_data_is_searchable="1" AND all_peers_are_up="1" AND replication_factor_met="1" AND search_factor_met="1", "Healthy",
+    all_peers_are_up="1" AND search_factor_met="1", "Degraded",
+    1=1, "Critical"
+)
+| eval color=case(
+    health_status="Healthy","green",
+    health_status="Degraded","yellow",
+    1=1,"red"
+)
+| fields health_status, color
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xD93F3C"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Overall Status</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 2: INDEXER CLUSTER HEALTH  -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>Indexer Cluster Health</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Monitor indexer peer status, replication compliance, and indexing rates across sites.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Indexer Peer Status by Site</title>
+      <table>
+        <search base="base_cluster_peers">
+          <query>
+| table label, site, status, is_searchable_text, bucket_count, primary_count, replication_count
+| rename label as "Indexer", site as "Site", status as "Status", is_searchable_text as "Searchable", bucket_count as "Total Buckets", primary_count as "Primary", replication_count as "Replicated"
+| sort Site, Indexer
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Up":"#65A637","Down":"#D93F3C","ReassigningPrimaries":"#F7BC38"}</colorPalette>
+        </format>
+        <format type="color" field="Searchable">
+          <colorPalette type="map">{"Yes":"#65A637","No":"#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Replication Factor Compliance</title>
+      <single>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/health
+| eval rf_met=if(replication_factor_met="1","100","0")
+| fields rf_met
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xD93F3C","0x65A637"]</option>
+        <option name="rangeValues">[99]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">RF Status</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Search Factor Compliance</title>
+      <single>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/health
+| eval sf_met=if(search_factor_met="1","100","0")
+| fields sf_met
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xD93F3C","0x65A637"]</option>
+        <option name="rangeValues">[99]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">SF Status</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Indexing Rate (Last Hour)</title>
+      <chart>
+        <search>
+          <query>
+index=_internal source=*metrics.log group=per_index_thruput earliest=-1h
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| timechart span=5m sum(kb) as kb_indexed by site
+| foreach * [eval "&lt;&lt;FIELD&gt;&gt;"=round('&lt;&lt;FIELD&gt;&gt;'/1024,2)]
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">MB Indexed</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Indexer Queue Fill Percentage</title>
+      <chart>
+        <search>
+          <query>
+index=_internal source=*metrics.log group=queue name IN ("indexQueue","parsingQueue","aggQueue","tcpin_queue") earliest=-1h
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| eval fill_pct=if(tonumber(max_size)>0,round((tonumber(current_size)/tonumber(max_size))*100,2),0)
+| timechart span=5m avg(fill_pct) as avg_fill_pct by name
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Fill %</option>
+        <option name="charting.axisY.maximumNumber">100</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 3: SEARCH HEAD CLUSTER     -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>Search Head Cluster Health</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Monitor SHC member status, captain stability, and KV Store health.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Search Head Cluster Member Status</title>
+      <table>
+        <search base="base_shc_members">
+          <query>
+| table label, site, status, is_captain_text, adhoc_searchhead, last_heartbeat_age
+| eval last_heartbeat_min=round(coalesce(tonumber(last_heartbeat_age),0)/60,1)
+| fields - last_heartbeat_age
+| rename label as "Search Head", site as "Site", status as "Status", is_captain_text as "Role", adhoc_searchhead as "Ad-hoc", last_heartbeat_min as "Last Heartbeat (min)"
+| sort Site, "Search Head"
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Up":"#65A637","Down":"#D93F3C"}</colorPalette>
+        </format>
+        <format type="color" field="Role">
+          <colorPalette type="map">{"CAPTAIN":"#1E93C6","Member":"#999999"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>KV Store Health</title>
+      <single>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_search_head splunk_server=* /services/server/health/splunkd/details
+| search features.name="KVStore"
+| stats count(eval(features.health="green")) as healthy_count, dc(splunk_server) as total_count
+| eval status_pct=if(tonumber(total_count)>0,round((tonumber(healthy_count)/tonumber(total_count))*100,2),0)
+| fields status_pct
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xD93F3C","0xF7BC38","0x65A637"]</option>
+        <option name="rangeValues">[50,99]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Healthy Nodes</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Active Searches (Now)</title>
+      <single>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_search_head splunk_server=* /services/search/jobs count=0
+| search NOT [rest /services/search/jobs splunk_server=local | search isScheduled=1 | fields sid]
+| stats count as active_searches
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="rangeValues">[0,10,20,30]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Concurrent</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Average Search Duration (Last Hour)</title>
+      <chart>
+        <search>
+          <query>
+index=_audit action=search earliest=-1h
+| timechart span=10m avg(total_run_time) as avg_runtime_sec
+| eval avg_runtime_sec=round(avg_runtime_sec,2)
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Seconds</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 4: LICENSE & CAPACITY      -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>License Usage &amp; Capacity Planning</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Track license consumption, index growth, and storage capacity across the environment.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Daily License Usage vs Quota</title>
+      <chart>
+        <search base="base_license_usage">
+          <query>
+| fields _time, daily_gb, quota_gb
+          </query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.text">Date</option>
+        <option name="charting.axisTitleY.text">GB</option>
+        <option name="charting.chart.overlayFields">quota_gb</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>License Usage by Index (Last 7 Days)</title>
+      <chart>
+        <search>
+          <query>
+index=_internal source=*license_usage.log type=Usage earliest=-7d
+| eval gb=round(b/1024/1024/1024,3)
+| stats sum(gb) as total_gb by idx
+| sort 10 -total_gb
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>900</refresh>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>30-Day License Trend</title>
+      <chart>
+        <search>
+          <query>
+index=_internal source=*license_usage.log type=Usage earliest=-30d
+| timechart span=1d sum(b) as bytes_used
+| eval gb_used=round(bytes_used/1024/1024/1024,2)
+| fields _time, gb_used
+          </query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <refresh>3600</refresh>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.axisTitleX.text">Date</option>
+        <option name="charting.axisTitleY.text">GB Used</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Storage Capacity by Indexer (Top 10)</title>
+      <chart>
+        <search>
+          <query>
+index=_introspection component=Partitions earliest=-5m
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| eval used_pct=if(tonumber('data.capacity')>0,round(((tonumber('data.capacity')-tonumber('data.available'))/tonumber('data.capacity'))*100,2),0)
+| stats max(used_pct) as max_used_pct by host
+| sort 10 -max_used_pct
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>900</refresh>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisTitleX.text">Disk Usage %</option>
+        <option name="charting.axisTitleY.text">Indexer</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 5: PERFORMANCE METRICS     -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>System Performance Metrics</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Monitor CPU, memory, and I/O utilization across infrastructure components.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>CPU Usage by Host (Last 4 Hours)</title>
+      <chart>
+        <search base="base_introspection">
+          <query>
+| timechart span=10m avg(cpu_pct) as avg_cpu by host limit=10
+          </query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">CPU %</option>
+        <option name="charting.axisY.maximumNumber">100</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Memory Usage by Host (Last 4 Hours)</title>
+      <chart>
+        <search base="base_introspection">
+          <query>
+| timechart span=10m avg(mem_pct) as avg_mem by host limit=10
+          </query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Memory %</option>
+        <option name="charting.axisY.maximumNumber">100</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Top 10 Hosts by Resource Usage (Current)</title>
+      <table>
+        <search base="base_introspection">
+          <query>
+| stats latest(cpu_pct) as current_cpu, latest(mem_pct) as current_mem by host
+| eval resource_score=round((coalesce(tonumber(current_cpu),0) + coalesce(tonumber(current_mem),0))/2,2)
+| sort 10 -resource_score
+| rename host as "Host", current_cpu as "CPU %", current_mem as "Memory %", resource_score as "Combined Score"
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="CPU %">
+          <colorPalette type="minMidMax" maxColor="#D93F3C" minColor="#65A637" midColor="#F7BC38"></colorPalette>
+          <scale type="minMidMax" minValue="0" maxValue="100" midValue="70"></scale>
+        </format>
+        <format type="color" field="Memory %">
+          <colorPalette type="minMidMax" maxColor="#D93F3C" minColor="#65A637" midColor="#F7BC38"></colorPalette>
+          <scale type="minMidMax" minValue="0" maxValue="100" midValue="70"></scale>
+        </format>
+        <format type="number" field="CPU %">
+          <option name="precision">2</option>
+        </format>
+        <format type="number" field="Memory %">
+          <option name="precision">2</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 6: MULTISITE STATUS        -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>Multisite Infrastructure Status</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Monitor site affinity, availability, and cross-site replication health.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Site Availability Summary</title>
+      <table>
+        <search>
+          <query>
+| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/sites
+| eval total_peers=tonumber('peers.total')
+| eval up_peers=tonumber('peers.up')
+| eval down_peers=tonumber('peers.down')
+| eval availability_pct=if(tonumber(total_peers)>0,round((tonumber(up_peers)/tonumber(total_peers))*100,2),0)
+| eval rf_met=if(replication_factor_met="1","Yes","No")
+| eval sf_met=if(search_factor_met="1","Yes","No")
+| table site, total_peers, up_peers, down_peers, availability_pct, rf_met, sf_met
+| rename site as "Site", total_peers as "Total Peers", up_peers as "Up", down_peers as "Down", availability_pct as "Availability %", rf_met as "RF Met", sf_met as "SF Met"
+| sort Site
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Availability %">
+          <colorPalette type="minMidMax" maxColor="#65A637" minColor="#D93F3C" midColor="#F7BC38"></colorPalette>
+          <scale type="minMidMax" minValue="0" maxValue="100" midValue="80"></scale>
+        </format>
+        <format type="color" field="RF Met">
+          <colorPalette type="map">{"Yes":"#65A637","No":"#D93F3C"}</colorPalette>
+        </format>
+        <format type="color" field="SF Met">
+          <colorPalette type="map">{"Yes":"#65A637","No":"#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Bucket Distribution by Site</title>
+      <chart>
+        <search base="base_cluster_peers">
+          <query>
+| stats sum(bucket_count) as total_buckets by site
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Searchable Buckets by Site</title>
+      <chart>
+        <search base="base_cluster_peers">
+          <query>
+| stats sum(search_count) as searchable_buckets by site
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Primary Buckets by Site</title>
+      <chart>
+        <search base="base_cluster_peers">
+          <query>
+| stats sum(primary_count) as primary_buckets by site
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 7: ACTIVE ISSUES           -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <title>Active Issues &amp; Alerts</title>
+      <html>
+        <p style="text-align:center; font-size:14px; color:#5c5c5c;">
+          Critical issues requiring immediate attention. Empty tables indicate healthy status.
+        </p>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Offline Indexers</title>
+      <table>
+        <search base="base_cluster_peers">
+          <query>
+| search status!="Up"
+| table label, site, status, last_heartbeat_age
+| eval last_heartbeat_min=round(last_heartbeat_age/60,1)
+| fields - last_heartbeat_age
+| rename label as "Indexer", site as "Site", status as "Status", last_heartbeat_min as "Last Seen (min ago)"
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Down":"#D93F3C","ReassigningPrimaries":"#F7BC38"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>Offline Search Heads</title>
+      <table>
+        <search base="base_shc_members">
+          <query>
+| search status!="Up"
+| table label, site, status, is_captain_text, last_heartbeat_age
+| eval last_heartbeat_min=round(last_heartbeat_age/60,1)
+| fields - last_heartbeat_age
+| rename label as "Search Head", site as "Site", status as "Status", is_captain_text as "Role", last_heartbeat_min as "Last Seen (min ago)"
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Down":"#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Disk Space Warnings (&gt;75% Full)</title>
+      <table>
+        <search>
+          <query>
+index=_introspection component=Partitions earliest=-10m
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| eval capacity_gb=round(coalesce(tonumber('data.capacity'),0)/1024/1024,2)
+| eval available_gb=round(coalesce(tonumber('data.available'),0)/1024/1024,2)
+| eval used_pct=if(tonumber('data.capacity')>0,round(((tonumber('data.capacity')-tonumber('data.available'))/tonumber('data.capacity'))*100,2),0)
+| where used_pct &gt; 75
+| stats max(used_pct) as max_used_pct, min(available_gb) as min_available_gb by host, data.mount_point
+| rename host as "Host", data.mount_point as "Mount Point", max_used_pct as "Usage %", min_available_gb as "Available GB"
+| sort -"Usage %"
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>900</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Usage %">
+          <colorPalette type="minMidMax" maxColor="#D93F3C" minColor="#F7BC38" midColor="#F58F39"></colorPalette>
+          <scale type="minMidMax" minValue="75" maxValue="100" midValue="85"></scale>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>Failed Scheduled Searches (Last 24h)</title>
+      <table>
+        <search>
+          <query>
+index=_internal source=*scheduler.log* status=failure earliest=-24h
+| rex field=_raw "savedsearch_name=\"(?&lt;search_name&gt;[^\"]+)\""
+| stats count as failure_count, latest(_time) as last_failure by search_name, app
+| eval last_failure_time=strftime(last_failure,"%Y-%m-%d %H:%M:%S")
+| fields - last_failure
+| where failure_count &gt; 2
+| sort -failure_count
+| rename search_name as "Search Name", app as "App", failure_count as "Failures", last_failure_time as "Last Failure"
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>900</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Failures">
+          <colorPalette type="minMidMax" maxColor="#D93F3C" minColor="#F7BC38"></colorPalette>
+          <scale type="minMidMax" minValue="2" maxValue="10"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>High Queue Utilization (&gt;70%)</title>
+      <table>
+        <search>
+          <query>
+index=_internal source=*metrics.log group=queue earliest=-15m
+| eval site=case(
+    like(host,"%site1%"),"site1",
+    like(host,"%site2%"),"site2",
+    like(host,"%site3%"),"site3",
+    1=1,"unknown"
+)
+| search site=$site_token$
+| eval fill_pct=if(tonumber(max_size)>0,round((tonumber(current_size)/tonumber(max_size))*100,2),0)
+| where fill_pct &gt; 70
+| stats max(fill_pct) as max_fill_pct by host, name
+| rename host as "Host", name as "Queue", max_fill_pct as "Fill %"
+| sort -"Fill %"
+          </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+          <refresh>$refresh_token$</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Fill %">
+          <colorPalette type="minMidMax" maxColor="#D93F3C" minColor="#F7BC38" midColor="#F58F39"></colorPalette>
+          <scale type="minMidMax" minValue="70" maxValue="100" midValue="85"></scale>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>Disconnected Forwarders (Last 24h)</title>
+      <table>
+        <search base="base_forwarders">
+          <query>
+| search status="Critical" OR status="Warning"
+| table status, count
+| rename status as "Status", count as "Count"
+          </query>
+        </search>
+        <option name="count">5</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Critical":"#D93F3C","Warning":"#F7BC38"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <!-- ============================== -->
+  <!-- ROW 8: FOOTER INFO             -->
+  <!-- ============================== -->
+  
+  <row>
+    <panel>
+      <html>
+        <div style="text-align:center; padding:20px; background-color:#f5f5f5; border-radius:5px; margin-top:20px;">
+          <p style="font-size:12px; color:#666;">
+            <b>Splunk Multisite Infrastructure Monitoring Dashboard</b><br/>
+            Auto-refresh: $refresh_token$ seconds | Time Range: $time_token.earliest$ to $time_token.latest$ | Site Filter: $site_token$<br/>
+            <i>For detailed troubleshooting, drill down into specific panels or run ad-hoc searches.</i>
+          </p>
+        </div>
+      </html>
+    </panel>
+  </row>
+  
+</form>
