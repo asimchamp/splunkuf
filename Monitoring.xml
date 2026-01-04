@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form version="1.1">
+  <label>On-Premises Cluster Health &amp; Monitoring</label>
+  <description>Comprehensive monitoring dashboard for on-prem indexer and search head clusters with health status, performance metrics, and licensing overview.</description>
+  
+  <!-- Time Range Input -->
+  <fieldset autoRun="true" submitButton="true">
+    <input type="time" token="time_picker">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  
+  <!-- Base Search for Introspection Data (Post-processed by panels) -->
+  <search id="base_introspection_search">
+    <query>index=_introspection sourcetype=splunk_resource_usage component=PerProcess $time_picker$ | stats latest(data.pct_cpu) as cpu_pct, latest(data.mem_used) as mem_bytes by host, data.process_type</query>
+    <earliest>$time_picker.earliest$</earliest>
+    <latest>$time_picker.latest$</latest>
+  </search>
+
+  <!-- ============================================
+       SECTION 1: INDEXER CLUSTER HEALTH
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Indexer Cluster Health Status</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/info output_mode=json | fields label, status, indexing_ready_flag, peer_info.replication_count, peer_info.search_count | eval status=case(status="Searchable", "HEALTHY", status="Not Searchable", "CRITICAL", 1=1, "UNKNOWN") | stats first(status) as cluster_status | where cluster_status!="" | fields cluster_status</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xF58F39","0xD93F3C"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="underLabel">Cluster Status</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">0</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Total Indexer Peers</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/peers | stats count as peer_count | fields peer_count</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Active Peers</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Searchable Peers</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/peers | search label!="" | eval searchable=if(status="Up", 1, 0) | stats sum(searchable) as searchable_peers | fields searchable_peers</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xD93F3C"]</option>
+        <option name="rangeValues">[0,5]</option>
+        <option name="underLabel">Up &amp; Searchable</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Indexer Peers Status Table -->
+  <row>
+    <panel>
+      <title>Indexer Peers - Detailed Status</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/peers 
+| fields label, status, restart_required_flag, replication_count_actual, search_count_actual, last_heartbeat_attempt
+| rename label as "Peer Name", status as "Status", restart_required_flag as "Restart Required", replication_count_actual as "Replication Count", search_count_actual as "Search Count", last_heartbeat_attempt as "Last Heartbeat"
+| table "Peer Name", Status, "Restart Required", "Replication Count", "Search Count", "Last Heartbeat"</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Up": "#65A637", "Down": "#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 2: SEARCH HEAD CLUSTER STATUS
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Search Head Cluster - Captain Status</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_shcluster_members splunk_server=* /services/shcluster/captain/info 
+| fields label, status
+| eval captain_label=if(status="ok", "ACTIVE", "INACTIVE")
+| stats first(captain_label) as captain_status
+| where captain_status!=""
+| fields captain_status</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xD93F3C","0x65A637"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="underLabel">Captain Status</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>SHC Members Count</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_shcluster_members splunk_server=* /services/shcluster/member/info | stats count as member_count | fields member_count</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Total SHC Members</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Healthy SHC Members</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_shcluster_members splunk_server=* /services/shcluster/member/info 
+| search status=up
+| stats count as healthy_members
+| fields healthy_members</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xD93F3C","0xF7BC38","0x65A637"]</option>
+        <option name="rangeValues">[0,2]</option>
+        <option name="underLabel">Members Up</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- SHC Members Detailed Table -->
+  <row>
+    <panel>
+      <title>Search Head Cluster - Member Details</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_shcluster_members splunk_server=* /services/shcluster/member/info
+| fields label, status, heartbeat_status, last_heartbeat_attempt, pending_searches, replication_count
+| rename label as "Member Name", status as "Status", heartbeat_status as "Heartbeat Status", last_heartbeat_attempt as "Last Heartbeat", pending_searches as "Pending Searches", replication_count as "Replication Count"
+| table "Member Name", Status, "Heartbeat Status", "Last Heartbeat", "Pending Searches", "Replication Count"</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"up": "#65A637", "down": "#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 3: DAILY INGESTION TRENDS
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Daily Ingestion Trends - Last 24 Hours (GB/Hour)</title>
+      <chart>
+        <search>
+          <query>index=_internal source=*metrics.log* group=queue processor=tcpout_connections 
+| timechart span=1h sum(kb) as kb_ingested by host 
+| eval gb_ingested=round(kb_ingested/1048576, 2) 
+| fields - kb_ingested
+| sort - _time</query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">GB Ingested</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Per-Indexer Ingestion Detail -->
+  <row>
+    <panel>
+      <title>Ingestion by Indexer Peer - Last 24 Hours</title>
+      <table>
+        <search>
+          <query>index=_internal source=*metrics.log* group=queue processor=tcpout_connections $time_picker$
+| stats sum(kb) as total_kb by host
+| eval total_gb=round(total_kb/1048576, 2)
+| eval pct_of_total=round((total_kb/sum(total_kb))*100, 2)
+| rename host as "Indexer", total_gb as "Total GB", pct_of_total as "% of Total"
+| table Indexer, "Total GB", "% of Total"
+| sort - "Total GB"</query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Total GB">
+          <option name="precision">2</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 4: LICENSING INFORMATION
+       ============================================ -->
+  <row>
+    <panel>
+      <title>License Quota Status</title>
+      <single>
+        <search>
+          <query>| rest /services/licensing/license-master/licenses 
+| fields quota 
+| eval quota_gb=round(quota/1024, 2) 
+| stats first(quota_gb) as quota_gb 
+| fields quota_gb</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">License Quota (GB)</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Monthly License Usage</title>
+      <single>
+        <search>
+          <query>| rest /services/licensing/license-master/licenses 
+| fields quota, window_period 
+| appendcols [search index=_internal source=license_usage.log* $time_picker$ 
+| stats sum(b) as usage_bytes 
+| eval usage_gb=round(usage_bytes/1024/1024/1024, 2)]
+| eval usage_pct=round((usage_gb/quota)*100, 1)
+| stats first(usage_pct) as usage_pct 
+| fields usage_pct</query>
+          <earliest>-30d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xD93F3C"]</option>
+        <option name="rangeValues">[0,70,90]</option>
+        <option name="suffix">%</option>
+        <option name="underLabel">Usage Utilization</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Current Month License Usage Details</title>
+      <table>
+        <search>
+          <query>index=_internal source=license_usage.log* earliest=-30d 
+| timechart span=1d sum(b) as daily_usage_bytes by host
+| eval daily_usage_gb=round(daily_usage_bytes/1024/1024/1024, 2)
+| fields - daily_usage_bytes
+| transpose
+| rename "column" as "Date", "row 1" as "Usage (GB)", "row 2" as "Usage (GB)", "row 3" as "Usage (GB)", "row 4" as "Usage (GB)"</query>
+          <earliest>-30d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">none</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 5: BUCKET STATUS &amp; REPLICATION
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Bucket Replication Status</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/buckets 
+| search is_searchable=1
+| stats count as searchable_buckets
+| fields searchable_buckets</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Searchable Buckets</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Non-Searchable Buckets</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/buckets 
+| search is_searchable=0
+| stats count as non_searchable_buckets
+| fields non_searchable_buckets</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xD93F3C"]</option>
+        <option name="rangeValues">[0,5]</option>
+        <option name="underLabel">Non-Searchable Count</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Fixup Tasks Running</title>
+      <single>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/fixup 
+| stats count as fixup_tasks
+| fields fixup_tasks</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x65A637","0xF7BC38","0xD93F3C"]</option>
+        <option name="rangeValues">[0,2]</option>
+        <option name="underLabel">Active Fixup Tasks</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Bucket Replication Details -->
+  <row>
+    <panel>
+      <title>Bucket Replication Status by Index</title>
+      <table>
+        <search>
+          <query>| rest splunk_server_group=dmc_group_cluster_master splunk_server=* /services/cluster/master/indexes 
+| fields title, name, is_searchable, is_replicated, replication_count, replication_factor
+| rename title as "Index Name", name as "Index ID", is_searchable as "Searchable", is_replicated as "Replicated", replication_count as "Current Rep Count", replication_factor as "Rep Factor"
+| table "Index Name", "Index ID", Searchable, Replicated, "Current Rep Count", "Rep Factor"</query>
+          <earliest>-5m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">15</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Searchable">
+          <colorPalette type="map">{"1": "#65A637", "0": "#D93F3C"}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 6: SYSTEM PERFORMANCE
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Average CPU Utilization - All Cluster Members</title>
+      <chart>
+        <search base="base_introspection_search">
+          <query>| timechart avg(cpu_pct) as avg_cpu by host
+          | fields _time, *</query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">CPU %</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Memory Utilization Trend -->
+  <row>
+    <panel>
+      <title>Average Memory Utilization - All Cluster Members</title>
+      <chart>
+        <search base="base_introspection_search">
+          <query>| timechart avg(mem_bytes) as avg_mem by host
+          | eval avg_mem_mb=avg_mem/1024/1024
+          | fields - avg_mem
+          | fields _time, *</query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Memory (MB)</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Per-Host CPU and Memory Table -->
+  <row>
+    <panel>
+      <title>Current CPU &amp; Memory Usage by Host</title>
+      <table>
+        <search>
+          <query>index=_introspection sourcetype=splunk_resource_usage component=PerProcess $time_picker$ 
+| stats latest(data.pct_cpu) as cpu_pct, latest(data.mem_used) as mem_bytes by host
+| eval mem_mb=round(mem_bytes/1024/1024, 2)
+| eval cpu_pct=round(cpu_pct, 2)
+| rename host as "Host", cpu_pct as "CPU %", mem_mb as "Memory (MB)"
+| table Host, "CPU %", "Memory (MB)"
+| sort - "CPU %"</query>
+          <earliest>-30m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="color" field="CPU %">
+          <colorPalette type="minMidMax">["0x65A637","0xF7BC38","0xD93F3C"]</colorPalette>
+          <scale type="minMidMax" mid="50" min="0" max="100"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ============================================
+       SECTION 7: DISK UTILIZATION
+       ============================================ -->
+  <row>
+    <panel>
+      <title>Disk Space Utilization - On-Prem Volumes</title>
+      <table>
+        <search>
+          <query>index=_introspection component=DiskObjects $time_picker$ sourcetype=splunk_resource_usage
+| rename data.* as *
+| stats latest(capacity) as capacity, latest(available) as available by host, mount_point
+| eval used=capacity-available
+| eval used_pct=round((used/capacity)*100, 2)
+| eval capacity_gb=round(capacity/1024/1024/1024, 2)
+| eval available_gb=round(available/1024/1024/1024, 2)
+| eval used_gb=round(used/1024/1024/1024, 2)
+| rename host as "Host", mount_point as "Mount Point", capacity_gb as "Capacity (GB)", used_gb as "Used (GB)", available_gb as "Available (GB)", used_pct as "Used %"
+| table Host, "Mount Point", "Capacity (GB)", "Used (GB)", "Available (GB)", "Used %"</query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">row</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Used %">
+          <colorPalette type="minMidMax">["0x65A637","0xF7BC38","0xD93F3C"]</colorPalette>
+          <scale type="minMidMax" mid="70" min="0" max="100"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+</form>
