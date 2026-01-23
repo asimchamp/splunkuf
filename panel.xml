@@ -1,0 +1,190 @@
+  <row>
+    <panel>
+      <title>🔥 Skipped Searches Heatmap - GitHub Style (Day x Hour Matrix)</title>
+      <html>
+      <div style="background:#2d2d44; padding:5px; border-radius:4px; margin-bottom:10px;">
+        <b>📊 Purpose:</b> Visual heatmap showing search skip patterns by day of week and hour. 
+        <span style="color:#4ECDC4;">💡 Brighter colors = more skips. Identify peak problem times.</span>
+      </div>
+    </html>
+      <table>
+        <search>
+          <query>
+index=_internal sourcetype=scheduler status="skipped"
+| bin _time span=1h
+| eval hour=strftime(_time, "%H")
+| eval day=strftime(_time, "%A")
+| eval day_order=case(
+    day="Monday", 1,
+    day="Tuesday", 2,
+    day="Wednesday", 3,
+    day="Thursday", 4,
+    day="Friday", 5,
+    day="Saturday", 6,
+    day="Sunday", 7
+  )
+| stats sum(eval(1)) as search_count by day, day_order, hour
+| eval severity=case(
+    search_count &gt; 10, "🔴 Critical",
+    search_count &gt; 5, "🟠 High",
+    search_count &gt; 2, "🟡 Moderate",
+    search_count &gt; 0, "🟢 Low",
+    1=1, "⚪ None"
+  )
+| eval display_value=search_count
+``` Append all possible day-hour combinations to ensure complete matrix```
+| appendpipe 
+    [| stats count 
+    | eval day="Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    | makemv delim="," day
+    | mvexpand day
+    | eval hour="00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23"
+    | makemv delim="," hour
+    | mvexpand hour
+    | eval search_count=0, display_value=0
+    | eval day_order=case(
+        day="Monday", 1,
+        day="Tuesday", 2,
+        day="Wednesday", 3,
+        day="Thursday", 4,
+        day="Friday", 5,
+        day="Saturday", 6,
+        day="Sunday", 7
+      )]
+``` Aggregate and keep max values (real data over zeros)```
+| stats max(search_count) as search_count, max(day_order) as day_order by day, hour
+| eval severity=case(
+    search_count &gt; 10, "🔴 Critical",
+    search_count &gt; 5, "🟠 High",
+    search_count &gt; 2, "🟡 Moderate",
+    search_count &gt; 0, "🟢 Low",
+    1=1, "⚪ None"
+  )
+| eval display_value=if(search_count=0, "-", tostring(search_count))
+``` Create matrix format with days as rows and hours as columns```
+| xyseries day hour display_value
+| eval day_order=case(
+    day="Monday", 1,
+    day="Tuesday", 2,
+    day="Wednesday", 3,
+    day="Thursday", 4,
+    day="Friday", 5,
+    day="Saturday", 6,
+    day="Sunday", 7
+  )
+| sort day_order
+| fields - day_order
+| fillnull value="-"
+        </query>
+          <earliest>$time_token.earliest$</earliest>
+          <latest>$time_token.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">cell</option>
+        <option name="rowNumbers">false</option>
+        <option name="wrap">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+        <!-- Format day column -->
+        <format type="color" field="day">
+          <colorPalette type="map">{"Monday": "#1e93ff", "Tuesday": "#1e93ff", "Wednesday": "#1e93ff", "Thursday": "#1e93ff", "Friday": "#1e93ff", "Saturday": "#4ECDC4", "Sunday": "#4ECDC4"}</colorPalette>
+        </format>
+        <!-- Apply heatmap colors to all hour columns -->
+        <format type="color" field="00">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="01">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="02">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="03">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="04">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="05">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="06">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="07">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="08">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="09">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="10">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="11">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="12">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="13">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="14">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="15">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="16">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="17">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="18">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="19">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="20">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="21">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="22">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+        <format type="color" field="23">
+          <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
+          <scale type="minMidMax" midType="percentile" midValue="50"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
