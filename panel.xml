@@ -1,63 +1,134 @@
 | union
-    [| search index=_internal source=*scheduler.log* earliest=-24h
-     | rex field=_raw "savedsearch_name=\"(?<savedsearch_name>[^\"]+)\""
-     | rex field=_raw "run_time=(?<run_time>[\d\.]+)"
-     | where tonumber(run_time) > 300 
-     | stats dc(savedsearch_name) as count
+    [| search index=_audit action=search info=completed 
+     | eval runtime_seconds=tonumber(total_run_time)
+     | where runtime_seconds > 300
+     | stats dc(search_id) as count
      | eval issue_type="Long-Running Searches (>5 min)"
-     | eval severity="🟡 ELEVATED"
-     | eval recommended_action="Consider summary indexing for searches with >1min runtime. Optimize SPL logic."]
+     | eval severity=case(
+         count > 50, "🔴 CRITICAL",
+         count > 20, "🟡 ELEVATED",
+         1=1, "🟢 NORMAL")
+     | eval recommended_action="Consider summary indexing for searches with >5min runtime. Optimize SPL logic and use tstats where possible."]
     
-    [| search index=_internal source=*scheduler.log* "exceeded its configured max run time" earliest=-24h
-     | stats count
-     | eval issue_type="Searches Exceeding Schedule Window"
-     | eval severity="🔴 CRITICAL"
-     | eval recommended_action="Extend schedule window or enable 'auto' mode. Review search efficiency."]
+    [| search index=_internal sourcetype=scheduler
+     | stats dc(savedsearch_name) as count by _time
+     | bin _time span=1h
+     | stats avg(count) as count
+     | eval count=round(count, 0)
+     | eval issue_type="Total Searches Run Over Time"
+     | eval severity=case(
+         count > 100, "🔴 CRITICAL",
+         count > 50, "🟡 ELEVATED",
+         1=1, "🟢 NORMAL")
+     | eval recommended_action="Monitor search scheduling patterns. Stagger cron schedules during peak hours to distribute load."]
     
-    [| search index=_internal source=*scheduler.log* "skipped because the next scheduled run time has arrived" priority=* earliest=-24h
-     | rex field=_raw "priority=(?<priority>\d+)"
-     | where tonumber(priority) <= 3
+    [| search index=_internal sourcetype=scheduler status="skipped"
      | stats count
-     | eval issue_type="High-Priority Searches Being Skipped"
-     | eval severity="🔴 CRITICAL"
-     | eval recommended_action="Increase max_concurrent_searches or optimize critical searches to run faster."]
-    
-    [| search index=_internal source=*metrics.log* group=subtask_counts earliest=-24h
-     | eval hour=strftime(_time, "%H")
-     | where hour >= "08" AND hour <= "18"
-     | stats avg(active_task_count) as avg_tasks by host
-     | where avg_tasks > 100
-     | stats count
-     | eval issue_type="Resource Contention During Peak Hours"
-     | eval severity="🟡 ELEVATED"
-     | eval recommended_action="Stagger cron schedules. Identify and reschedule non-critical searches."]
+     | eval issue_type="Total Searches Skipped"
+     | eval severity=case(
+         count > 100, "🔴 CRITICAL",
+         count > 50, "🟡 ELEVATED",
+         1=1, "🟢 NORMAL")
+     | eval recommended_action="Increase max_concurrent_searches or enable schedule window='auto'. Review skipped search priorities."]
     
     [| search index=_introspection component=Hostwide earliest=-15m latest=now
-     | stats avg(data.cpu_system_pct) as avg_cpu by host
-     | where avg_cpu > 80
+     | eval cpu_pct=tonumber(coalesce('data.cpu_system_pct', 0)) + tonumber(coalesce('data.cpu_user_pct', 0))
+     | stats avg(cpu_pct) as avg_cpu by host
+     | where avg_cpu > 60
      | stats count
-     | eval issue_type="Critical CPU Utilization (>80%)"
-     | eval severity="🔴 CRITICAL"
-     | eval recommended_action="Investigate workload distribution. Consider horizontal scaling or search optimization."]
+     | eval issue_type="Critical CPU Utilization"
+     | eval severity=case(
+         count > 5, "🔴 CRITICAL (>80%)",
+         count > 2, "🟡 ELEVATED (60-80%)",
+         1=1, "🟢 NORMAL (<60%)")
+     | eval recommended_action="Investigate workload distribution. Consider horizontal scaling or search optimization. Review concurrent search limits."]
     
     [| search index=_introspection component=Hostwide earliest=-15m latest=now
      | eval mem_used=tonumber(coalesce('data.mem_used', 0))
      | eval mem_total=tonumber(coalesce('data.mem', 1))
      | eval mem_used_pct=if(mem_total > 0, (mem_used / mem_total) * 100, 0)
      | stats avg(mem_used_pct) as avg_mem by host
-     | where avg_mem > 85
+     | where avg_mem > 75
      | stats count
      | eval issue_type="Memory Pressure Detected"
-     | eval severity="🟡 ELEVATED"
-     | eval recommended_action="Review memory-intensive searches. Optimize field extractions and stats commands."]
+     | eval severity=case(
+         count > 5, "🔴 CRITICAL (>90%)",
+         count > 2, "🟡 ELEVATED (75-90%)",
+         1=1, "🟢 NORMAL (<75%)")
+     | eval recommended_action="Review memory-intensive searches. Optimize field extractions and stats commands. Consider increasing system memory."]
     
-    [| search index=_internal source=*splunkd.log* "ERROR" "DiskSpaceMonitor" earliest=-24h
-     | rex field=_raw "path=(?<disk_path>[^\s]+)"
+    [| search index=_internal source=*metrics.log* group=queue earliest=-15m latest=now
+     | eval fill_pct=tonumber(coalesce(current_size, 0)) / tonumber(coalesce(max_size, 1)) * 100
+     | where fill_pct > 70
      | stats count
-     | eval issue_type="Disk Quota Exceeded"
-     | eval severity="🔴 CRITICAL"
-     | eval recommended_action="Clean up old summary indexes. Review retention policies."]
+     | eval issue_type="Queue Blocking/Congestion"
+     | eval severity=case(
+         count > 10, "🔴 CRITICAL (>90% full)",
+         count > 5, "🟡 ELEVATED (70-90% full)",
+         1=1, "🟢 NORMAL (<70%)")
+     | eval recommended_action="Check downstream indexers and network connectivity. May need to increase queue size or optimize data flow."]
+    
+    [| rest /services/server/introspection/indexer splunk_server=local
+     | eval disk_usage_pct=tonumber(coalesce(disk_usage, 0)) / tonumber(coalesce(disk_capacity, 1)) * 100
+     | where disk_usage_pct > 75
+     | stats count
+     | eval issue_type="Disk Space Critical"
+     | eval severity=case(
+         count > 3, "🔴 CRITICAL (>90% full)",
+         count > 1, "🟡 ELEVATED (75-90% full)",
+         1=1, "🟢 NORMAL (<75%)")
+     | eval recommended_action="Clean up old summary indexes. Review retention policies. Archive or delete old data."]
+    
+    [| search index=_internal sourcetype=scheduler earliest=-1h
+     | bin _time span=1m
+     | stats dc(savedsearch_name) as concurrent_searches by _time
+     | where concurrent_searches > 10
+     | stats count
+     | eval issue_type="Peak Hour Cron Collisions"
+     | eval severity=case(
+         count > 20, "🔴 CRITICAL (>20 concurrent)",
+         count > 10, "🟡 ELEVATED (10-20 concurrent)",
+         1=1, "🟢 NORMAL (<10)")
+     | eval recommended_action="Stagger cron schedules. Consider using schedule window='auto' for flexible execution timing."]
+    
+    [| rest /servicesNS/-/-/saved/searches splunk_server=local
+     | where is_scheduled=1 AND disabled=0
+     | eventstats count as collision_count by cron_schedule
+     | where collision_count > 5
+     | stats dc(title) as count
+     | eval issue_type="Scheduled Search Collisions"
+     | eval severity=case(
+         count > 20, "🔴 CRITICAL (>5 at same time)",
+         count > 10, "🟡 ELEVATED (3-5 at same time)",
+         1=1, "🟢 NORMAL (<3)")
+     | eval recommended_action="Review cron patterns. Reschedule searches to different minutes to avoid resource contention."]
+
+    [| search index=_introspection component=Hostwide earliest=-15m latest=now
+     | eval read_ops=tonumber(coalesce('data.read_ops', 0))
+     | eval write_ops=tonumber(coalesce('data.write_ops', 0))
+     | eval total_ops=read_ops + write_ops
+     | stats avg(total_ops) as avg_io by host
+     | where avg_io > 10000
+     | stats count
+     | eval issue_type="High Disk I/O Operations"
+     | eval severity=case(
+         count > 5, "🔴 CRITICAL (Disk saturation)",
+         count > 2, "🟡 ELEVATED (High I/O)",
+         1=1, "🟢 NORMAL")
+     | eval recommended_action="Monitor disk performance. Slow disk reads delay search results. Consider faster storage or reducing I/O load."]
+    
+    [| rest /services/shcluster/member/members splunk_server=local
+     | eval replication_lag_seconds=tonumber(coalesce(replication_lag, 0))
+     | where replication_lag_seconds > 60
+     | stats count
+     | eval issue_type="SHC Replication Lag"
+     | eval severity=case(
+         count > 3, "🔴 CRITICAL (>5min lag)",
+         count > 1, "🟡 ELEVATED (1-5min lag)",
+         1=1, "🟢 NORMAL (<1min)")
+     | eval recommended_action="Check network connectivity between SHC members. Monitor cluster health and artifact replication status."]
 
 | fillnull value=0 count
 | table issue_type, count, severity, recommended_action
 | rename issue_type as "Issue Type", count as "Count", severity as "Severity", recommended_action as "Recommended Action"
+| sort -Count
