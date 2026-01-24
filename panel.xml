@@ -1,14 +1,63 @@
-| rest /servicesNS/-/-/saved/searches
-  | search disabled=0 is_scheduled=1
-  | eval object_type=if(is_report=1,"Report","Saved Search")
-  | eval schedule=coalesce(cron_schedule, schedule)
-  | table title app owner object_type schedule
-| append
-[
-  | rest /servicesNS/-/-/datamodel/model
-  | rex field=acceleration "^\{\"enabled\"\:(?<is_enabled>[^\,]+)"
-  | search is_enabled=true
-  | eval object_type="Data Model (Accelerated)"
-  | table title app owner object_type
-]
-| stats count
+| union
+    [| search index=_internal source=*scheduler.log* earliest=-24h
+     | rex field=_raw "savedsearch_name=\"(?<savedsearch_name>[^\"]+)\""
+     | rex field=_raw "run_time=(?<run_time>[\d\.]+)"
+     | where tonumber(run_time) > 300 
+     | stats dc(savedsearch_name) as count
+     | eval issue_type="Long-Running Searches (>5 min)"
+     | eval severity="🟡 ELEVATED"
+     | eval recommended_action="Consider summary indexing for searches with >1min runtime. Optimize SPL logic."]
+    
+    [| search index=_internal source=*scheduler.log* "exceeded its configured max run time" earliest=-24h
+     | stats count
+     | eval issue_type="Searches Exceeding Schedule Window"
+     | eval severity="🔴 CRITICAL"
+     | eval recommended_action="Extend schedule window or enable 'auto' mode. Review search efficiency."]
+    
+    [| search index=_internal source=*scheduler.log* "skipped because the next scheduled run time has arrived" priority=* earliest=-24h
+     | rex field=_raw "priority=(?<priority>\d+)"
+     | where tonumber(priority) <= 3
+     | stats count
+     | eval issue_type="High-Priority Searches Being Skipped"
+     | eval severity="🔴 CRITICAL"
+     | eval recommended_action="Increase max_concurrent_searches or optimize critical searches to run faster."]
+    
+    [| search index=_internal source=*metrics.log* group=subtask_counts earliest=-24h
+     | eval hour=strftime(_time, "%H")
+     | where hour >= "08" AND hour <= "18"
+     | stats avg(active_task_count) as avg_tasks by host
+     | where avg_tasks > 100
+     | stats count
+     | eval issue_type="Resource Contention During Peak Hours"
+     | eval severity="🟡 ELEVATED"
+     | eval recommended_action="Stagger cron schedules. Identify and reschedule non-critical searches."]
+    
+    [| search index=_introspection component=Hostwide earliest=-15m latest=now
+     | stats avg(data.cpu_system_pct) as avg_cpu by host
+     | where avg_cpu > 80
+     | stats count
+     | eval issue_type="Critical CPU Utilization (>80%)"
+     | eval severity="🔴 CRITICAL"
+     | eval recommended_action="Investigate workload distribution. Consider horizontal scaling or search optimization."]
+    
+    [| search index=_introspection component=Hostwide earliest=-15m latest=now
+     | eval mem_used=tonumber(coalesce('data.mem_used', 0))
+     | eval mem_total=tonumber(coalesce('data.mem', 1))
+     | eval mem_used_pct=if(mem_total > 0, (mem_used / mem_total) * 100, 0)
+     | stats avg(mem_used_pct) as avg_mem by host
+     | where avg_mem > 85
+     | stats count
+     | eval issue_type="Memory Pressure Detected"
+     | eval severity="🟡 ELEVATED"
+     | eval recommended_action="Review memory-intensive searches. Optimize field extractions and stats commands."]
+    
+    [| search index=_internal source=*splunkd.log* "ERROR" "DiskSpaceMonitor" earliest=-24h
+     | rex field=_raw "path=(?<disk_path>[^\s]+)"
+     | stats count
+     | eval issue_type="Disk Quota Exceeded"
+     | eval severity="🔴 CRITICAL"
+     | eval recommended_action="Clean up old summary indexes. Review retention policies."]
+
+| fillnull value=0 count
+| table issue_type, count, severity, recommended_action
+| rename issue_type as "Issue Type", count as "Count", severity as "Severity", recommended_action as "Recommended Action"
