@@ -215,99 +215,99 @@
         </format>
         <format type="color" field="00">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="01">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="02">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="03">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="04">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="05">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="06">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="07">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="08">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="09">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="10">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="11">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="12">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="13">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="14">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="15">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="16">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="17">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="18">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="19">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="20">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="21">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="22">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="23">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
       </table>
     </panel>
@@ -357,99 +357,99 @@
         </format>
         <format type="color" field="00">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="01">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="02">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="03">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="04">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="05">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="06">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="07">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="08">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="09">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="10">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="11">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="12">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="13">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="14">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="15">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="16">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="17">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="18">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="19">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="20">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="21">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="22">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
         <format type="color" field="23">
           <colorPalette type="minMidMax" maxColor="#d93f3c" midColor="#f7bc38" minColor="#65a637"></colorPalette>
-          <scale type="minMidMax" minValue="1700" midValue="1750" maxValue="1800"></scale>
+          <scale type="minMidMax" minValue="1750" midValue="1775" maxValue="1800"></scale>
         </format>
       </table>
     </panel>
