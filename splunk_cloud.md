@@ -1,9 +1,10 @@
-# Splunk Cloud Platform Assessment Report
+# Splunk Cloud Platform Assessment Report — Revised v2.0
 
 **Client Environment:** Enterprise Cloud Deployment  
 **Daily Ingest Volume:** ~14 TB/day  
 **License Allocation:** ~1,800 Splunk Virtual Compute (SVC) Units  
-**Assessment Date:** February 8, 2026
+**Assessment Date:** February 11, 2026  
+**Revision:** v2.0 — Updated to reflect implemented assessment dashboards
 
 ---
 
@@ -17,26 +18,24 @@
 └─────────────────────────────────────────────────┘
 ```
 
-| **Domain**              | **Score** | **Status** | **Trend**   |
-| ----------------------- | --------- | ---------- | ----------- |
-| Architecture & Design   | 72/100    | 🟡 Yellow  | → Stable    |
-| Licensing & Consumption | 65/100    | 🟡 Yellow  | ↓ Declining |
-| Search Performance      | 58/100    | 🟠 Orange  | ↓ Declining |
-| Ingest & Data Quality   | 75/100    | 🟢 Green   | → Stable    |
-| Enterprise Security     | 62/100    | 🟡 Yellow  | → Stable    |
-| Access Management       | 70/100    | 🟡 Yellow  | → Stable    |
-| Storage & Retention     | 80/100    | 🟢 Green   | ↑ Improving |
-| Monitoring & Health     | 55/100    | 🟠 Orange  | → Stable    |
-| Security Posture        | 78/100    | 🟢 Green   | ↑ Improving |
+| **Domain**              | **Score** | **Status** | **Trend**   | **Dashboard**                           |
+| ----------------------- | --------- | ---------- | ----------- | --------------------------------------- |
+| Architecture & Design   | 72/100    | 🟡 Yellow  | → Stable    | Assessment Executive Overview           |
+| Licensing & Consumption | 65/100    | 🟡 Yellow  | ↓ Declining | License & SVC Consumption Dashboard     |
+| Search Performance      | 58/100    | 🟠 Orange  | ↓ Declining | Search Performance Monitoring Dashboard |
+| Enterprise Security     | 62/100    | 🟡 Yellow  | → Stable    | Enterprise Security Health Dashboard    |
+| Access Management       | 70/100    | 🟡 Yellow  | → Stable    | Access & RBAC Monitoring Dashboard      |
+| Platform Health         | 55/100    | 🟠 Orange  | → Stable    | Platform Health Monitoring Dashboard    |
+| Security Posture        | 78/100    | 🟢 Green   | ↑ Improving | Security Posture Dashboard              |
 
 ### 1.2 Critical Findings
 
 > [!CAUTION]
 > **HIGH-RISK ITEMS**
 >
-> 1. **Search Concurrency Exhaustion** - 85%+ slot utilization during peak hours
-> 2. **License Consumption Spikes** - 5-12% overages on month-end
-> 3. **ES Correlation Inefficiency** - 23 searches consuming 40% SVC allocation
+> 1. **Search Concurrency Exhaustion** — 85%+ slot utilization during peak hours
+> 2. **License Consumption Spikes** — 5-12% overages on month-end
+> 3. **ES Correlation Inefficiency** — 23 searches consuming 40% SVC allocation
 
 > [!WARNING]
 > **MEDIUM-PRIORITY RISKS**
@@ -54,7 +53,22 @@
 | User Productivity  | 25% report search delays    | 40% latency reduction  |
 | Platform Stability | 99.2% current SLA           | 99.7% achievable       |
 
-### 1.4 Strategic Roadmap
+### 1.4 Assessment Dashboard Suite (Implemented)
+
+> [!IMPORTANT]
+> **7 real-time dashboards have been implemented** to provide continuous visibility into every assessment domain. These dashboards replace static snapshots with live, queryable Splunk data.
+
+| **#** | **Dashboard**                    | **File Name**                                     | **Panels** | **Status** |
+| ----- | -------------------------------- | ------------------------------------------------- | ---------- | ---------- |
+| 1     | 🎯 Executive Overview            | `assessment_executive_overview.xml`               | 28         | ✅ Live    |
+| 2     | 📊 License & SVC Consumption     | `assessment_license_consumption.xml`              | 30+        | ✅ Live    |
+| 3     | 🔍 Search Performance Monitoring | `soc_search_performance_monitoring_dashboard.xml` | 40+        | ✅ Live    |
+| 4     | 🛡️ Enterprise Security Health    | `assessment_es_health.xml`                        | 30+        | ✅ Live    |
+| 5     | 👥 Access & RBAC Monitoring      | `assessment_access_rbac.xml`                      | 25+        | ✅ Live    |
+| 6     | 💻 Platform Health Monitoring    | `assessment_platform_health.xml`                  | 30+        | ✅ Live    |
+| 7     | 🔐 Security Posture              | `assessment_security_posture.xml`                 | 25+        | ✅ Live    |
+
+### 1.5 Strategic Roadmap
 
 **Phase 1 (0-60 Days):** Stabilization
 
@@ -131,9 +145,9 @@
 
 ### 2.3 Anti-Patterns Detected
 
-1. **Uncontrolled Resource Sharing** - ES and ad-hoc compete without prioritization
-2. **HF Bottleneck** - 8 HFs at 78-85% CPU, no load balancing
-3. **Legacy Syslog** - 1.3 TB/day bypassing modern ingestion
+1. **Uncontrolled Resource Sharing** — ES and ad-hoc compete without prioritization
+2. **HF Bottleneck** — 8 HFs at 78-85% CPU, no load balancing
+3. **Legacy Syslog** — 1.3 TB/day bypassing modern ingestion
 
 ### 2.4 Scalability Assessment
 
@@ -144,7 +158,14 @@
 | Search Slots | ~120          | 118 (98%)      | 🟠 Minimal   |
 
 **Projection:** License capacity breach in 4-5 months at 3.2% monthly growth.
+
+---
+
 ## 📊 3. Licensing & Consumption
+
+> [!NOTE]
+> **Dashboard Reference:** `assessment_license_consumption.xml` (1,065 lines, 30+ panels)
+> This dashboard provides real-time SVC consumption, ingestion tracking, and capacity forecasting with GitHub-style heatmaps.
 
 ### 3.1 Current License Profile
 
@@ -156,7 +177,46 @@
 | Daily Ingest Average | 14 TB        | -             |
 | Peak Ingest          | 16.2 TB      | 🟠 Near limit |
 
-### 3.2 Consumption Trends
+### 3.2 Dashboard Panels — License & SVC Consumption
+
+The **License & SVC Consumption Dashboard** includes the following sections:
+
+**Section: Entitlement Quotas (KPIs)**
+| **Panel** | **Visualization** | **SPL Source** |
+|-----------|-------------------|----------------|
+| 🎫 SVC Entitlement (Quota) | Single Value (Blue Block) | `(index=_cmc_summary OR index=summary) source="splunk-svc"` |
+| 📥 Daily Ingestion Entitlement | Single Value (Blue Block) | `(index=_cmc_summary OR index=summary) source="splunk-entitlements"` |
+| 📦 DDAA Entitlement | Single Value (Blue Block) | `(index=_cmc_summary OR index=summary) source="splunk-storage-summary"` |
+| 📦 DDAA Restore Entitlement | Single Value (Blue Block) | Same source, `DDAARestoreLimitGB` field |
+| 💾 DDAS Storage Entitlement | Single Value (Blue Block) | Same source, `activeStorageLicenseGB` field |
+
+**Section: Current Usage (KPIs)**
+| **Panel** | **Visualization** | **SPL Source** |
+|-----------|-------------------|----------------|
+| 📈 Peak SVC Usage (Current) | Single Value (Color-coded) | `(index=_cmc_summary OR index=summary) source="splunk-svc"` with `timechart` |
+| 📈 Daily Ingestion Usage (Current) | Single Value (Color-coded) | `index=_internal source=*license_usage.log type=Usage` |
+| 📦 DDAA Current Usage | Single Value (Color-coded) | Storage summary with `activeArchiveLicenseGB` |
+| 💾 DDAS Current Usage | Single Value (Color-coded) | Storage summary with `entitlementUsage` |
+
+**Section: SVC Trend & Analysis**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 SVC Utilization % | Single Value with color thresholds (80/95%) |
+| ⚠️ SVC Overage Days (30d) | Single Value (Green/Yellow/Red) |
+| 📈 SVC Usage Trend | Area Chart with threshold overlays (Entitlement + 80% line) |
+| 🥧 SVC Usage by Role | Pie Chart by search head role |
+| 📊 SVC Peak vs Entitlement (30 Days) | Column Chart with overlay thresholds |
+
+**Section: Advanced Analytics**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 🔥 SVC Consumption Heatmap | GitHub-style Day × Hour matrix (7 days) |
+| 📊 Top 20 Sourcetypes by License Volume | Horizontal Bar Chart |
+| 📈 Daily Ingest Trend (30 Days) | Area Chart with threshold overlay |
+| 📈 Ingest by Sourcetype Trend | Stacked Area Chart by sourcetype |
+| 📊 Top Ingest Sources by Volume (GB) | Horizontal Bar Chart |
+
+### 3.3 Consumption Trends
 
 **Monthly Pattern Analysis:**
 
@@ -171,7 +231,28 @@
 3. Ad-hoc Searches: 22% (396 SVC units)
 4. Data Model Acceleration: 10% (180 SVC units)
 
-### 3.3 License Audit SPL Queries
+### 3.4 Key SPL Queries (Live in Dashboard)
+
+```spl
+| SVC Entitlement Query
+(index=_cmc_summary OR index=summary) source="splunk-svc"
+    [ rest /services/server/info splunk_server=local
+    | fields splunk_server
+    | rex field=splunk_server "^[^.]+[.](?<stack>[^.]+)"
+    | eval host="*." .stack. ".*splunk*"
+    | fields host]
+| stats max(stack_license_svc) as svc_license_entitlement
+```
+
+```spl
+| SVC Peak Usage
+(index=_cmc_summary OR index=summary) source="splunk-svc" [subsearch...]
+| stats sum(utilized_svc) as utilized_svc latest(stack_license_svc) as stack_license_svc by _time
+| timechart span=1h max(utilized_svc) AS utilized_svc max(stack_license_svc) AS stack_license_svc
+| where isnotnull(utilized_svc) AND isnotnull(stack_license_svc)
+| sort - utilized_svc
+| head 1
+```
 
 ```spl
 | License Usage by Sourcetype (Daily)
@@ -182,33 +263,7 @@ index=_internal source=*license_usage.log type=Usage
 | head 20
 ```
 
-```spl
-| License Usage Trend (30 Days)
-index=_internal source=*license_usage.log type=Usage
-| timechart span=1d sum(b) as bytes
-| eval TB=round(bytes/1024/1024/1024/1024,2)
-| fields _time TB
-```
-
-```spl
-| SVC Consumption by Search Type
-index=_introspection sourcetype=splunk_resource_usage data.search_props.type=*
-| stats sum(data.mem_used) as mem_mb sum(data.elapsed) as elapsed_sec by data.search_props.type
-| eval SVC_estimate=round((mem_mb/1024)*(elapsed_sec/3600),2)
-| sort - SVC_estimate
-```
-
-```spl
-| License Spike Detection Alert
-index=_internal source=*license_usage.log type=Usage earliest=-1h
-| stats sum(b) as hourly_bytes
-| eval hourly_GB=hourly_bytes/1024/1024/1024
-| eval daily_projection=hourly_GB*24
-| where daily_projection > 15
-| eval alert="Projected daily ingest exceeds 15TB threshold"
-```
-
-### 3.4 Optimization Opportunities
+### 3.5 Optimization Opportunities
 
 | **Opportunity**                        | **Potential Savings**      | **Effort** |
 | -------------------------------------- | -------------------------- | ---------- |
@@ -217,15 +272,18 @@ index=_internal source=*license_usage.log type=Usage earliest=-1h
 | Remove orphaned scheduled searches     | 45-90 SVC units (2.5-5%)   | Low        |
 | Optimize data model acceleration       | 36-72 SVC units (2-4%)     | Medium     |
 
-### 3.5 Recommendations
+### 3.6 Recommendations
 
 1. **Immediate:** Deploy license monitoring dashboard with 85/95/100% alerts
 2. **Short-term:** Audit and optimize top 25 SVC-consuming searches
 3. **Medium-term:** Implement charge-back model by department/use case
-
 ---
 
 ## 🔍 4. Search Performance & Concurrency
+
+> [!NOTE]
+> **Dashboard Reference:** `soc_search_performance_monitoring_dashboard.xml` (1,564 lines, 40+ panels)
+> This is the most comprehensive dashboard with dynamic search head resolution, base searches, and advanced heatmap analytics.
 
 ### 4.1 Performance Metrics
 
@@ -238,35 +296,60 @@ index=_internal source=*license_usage.log type=Usage earliest=-1h
 | Peak Concurrent         | 118         | 120 (limit) | 🔴 Near Limit   |
 | Skipped Searches (30d)  | 342         | <50         | 🔴 Critical     |
 
-### 4.2 Search Type Distribution
+### 4.2 Dashboard Panels — Search Performance Monitoring
 
-| **Type**           | **Volume** | **Avg Duration** | **Resource Impact**  |
-| ------------------ | ---------- | ---------------- | -------------------- |
-| Ad-hoc             | 45%        | 18.3 sec         | High (variable)      |
-| Scheduled          | 35%        | 8.2 sec          | Medium (predictable) |
-| ES Correlation     | 15%        | 32.6 sec         | Very High            |
-| Dashboard Searches | 5%         | 4.1 sec          | Low                  |
+The **Search Performance Monitoring Dashboard** includes:
 
-### 4.3 Concurrency Analysis
+**Section: Executive KPIs**
+| **Panel** | **Visualization** | **Key Feature** |
+|-----------|-------------------|-----------------|
+| ⏰ Total Searches/Reports/Datamodels Schedule | Single Value (Blue) | Combines REST for saved searches + data models |
+| 🎯 Search Concurrency (Active / Max) | Single Value with status | Uses base search `concurrency_base` |
+| 🎯 Concurrency Gauge | Single Value with % | Color thresholds: 60%/80% |
+| 📊 Total Searches Run | Single Value | From `scheduler` with hourly bins |
 
-**Peak Hours Identified:** 9:00-11:00 AM, 2:00-4:00 PM (local time)
+**Section: Issue Detection KPIs**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| ⏭️ Total Searches Skipped | Single Value (Green/Yellow/Red) |
+| ⏱️ Long-Running Searches (>5 min) | Single Value with thresholds 20/50 |
+| 🔀 Scheduled Search Collisions | Single Value — max concurrent cron matches |
+| ⏳ Avg Search Runtime | Single Value with 30/60 sec thresholds |
 
-**Bottleneck Evidence:**
+**Section: Individual Issue Panels**
+- Severity-coded panels for each issue type with emoji indicators
+- Dynamic real-time counts from `_internal` and `_audit` indexes
 
+**Section: Concurrency Trend & Analysis**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Search Concurrency Trend | Line Chart (5-min span) with utilization % |
+| 📊 Search Distribution by Type | Pie Chart by search type |
+| 🔥 Top 20 Expensive Searches | Table with runtime, host, user, and search details |
+
+**Section: Scheduler Health**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Scheduler Health Trend | Column Chart (stacked) — success/skipped/failed by hour |
+| ⏭️ Top 20 Skipped Searches | Table with skip count, schedule, and impact |
+
+**Section: Advanced Analytics (Heatmaps)**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 🔥 Skipped Searches Heatmap (30 Days) | GitHub-style Date × Hour matrix |
+| 🔥 Search Concurrency Heatmap (7 Days) | GitHub-style Day × Hour matrix |
+
+**Key Design Feature — Dynamic Host Resolution:**
 ```spl
-| Search Concurrency Over Time
-index=_internal sourcetype=splunk_resource_usage component=PerProcess
-| timechart span=5m dc(data.search_props.sid) as concurrent_searches
-| where concurrent_searches > 80
+| rest /services/server/info splunk_server=local
+| fields splunk_server
+| rex field=splunk_server "^[^.]+[.](?<stack>[^.]+)"
+| eval host="*." .stack. ".*splunk*"
+| fields host
 ```
+This subsearch pattern dynamically resolves the Splunk Cloud stack name for host filtering across all panels.
 
-**Impact Analysis:**
-
-- 23 correlation search skip events in 30 days
-- 342 scheduled searches skipped due to concurrency limits
-- Average queue time during peak: 45 seconds
-
-### 4.4 Workload Management Recommendations
+### 4.3 Workload Management Recommendations
 
 **Proposed Resource Pool Configuration:**
 
@@ -276,21 +359,7 @@ index=_internal sourcetype=splunk_resource_usage component=PerProcess
 | Scheduled   | 35%            | 2            | Reports, alerts, summaries    |
 | Ad-hoc      | 25%            | 3            | User exploration              |
 
-**Implementation SPL:**
-
-```spl
-| Identify Searches for Pool Assignment
-| rest /services/saved/searches
-| search disabled=0 is_scheduled=1
-| eval pool=case(
-    match(eai:acl.app, "SplunkEnterpriseSecuritySuite"), "es_critical",
-    cron_schedule!="", "scheduled",
-    1=1, "adhoc"
-)
-| table title, eai:acl.app, cron_schedule, pool
-```
-
-### 4.5 Performance Optimization Actions
+### 4.4 Performance Optimization Actions
 
 | **Action**                          | **Impact** | **Effort** | **Priority** |
 | ----------------------------------- | ---------- | ---------- | ------------ |
@@ -302,92 +371,13 @@ index=_internal sourcetype=splunk_resource_usage component=PerProcess
 
 ---
 
-## 📥 5. Ingest, Parsing & Onboarding
+## 🧠 5. Enterprise Security (ES) Domain
 
-### 5.1 Data Source Inventory
+> [!NOTE]
+> **Dashboard Reference:** `assessment_es_health.xml` (838 lines, 30+ panels)
+> Provides correlation search performance metrics, data model acceleration status, notable event analytics, and advanced heatmap visualizations.
 
-| **Category**       | **Sources** | **Daily Volume** | **Quality Score** |
-| ------------------ | ----------- | ---------------- | ----------------- |
-| Windows Events     | 450 hosts   | 3.2 TB           | 🟢 92%            |
-| Linux/Unix Syslogs | 380 hosts   | 2.8 TB           | 🟢 88%            |
-| Network Devices    | 245 devices | 1.8 TB           | 🟡 75%            |
-| Application Logs   | 125 apps    | 2.4 TB           | 🟡 72%            |
-| Cloud Services     | 35 sources  | 2.1 TB           | 🟢 85%            |
-| Security Tools     | 28 tools    | 1.7 TB           | 🟡 78%            |
-
-### 5.2 Parsing Issues Identified
-
-| **Issue Type**       | **Affected Sources** | **Impact**            | **Severity** |
-| -------------------- | -------------------- | --------------------- | ------------ |
-| Timestamp Extraction | 18 sourcetypes       | Field accuracy        | 🟡 Medium    |
-| Event Breaking       | 12 sourcetypes       | Event count inflation | 🔴 High      |
-| Field Extraction     | 24 sourcetypes       | Search accuracy       | 🟡 Medium    |
-| Character Encoding   | 8 sourcetypes        | Data corruption       | 🔴 High      |
-
-### 5.3 Data Quality SPL Queries
-
-```spl
-| Identify Timestamp Issues
-index=* earliest=-24h
-| eval time_diff=abs(_indextime - _time)
-| where time_diff > 300
-| stats count by sourcetype, index
-| where count > 100
-| sort - count
-```
-
-```spl
-| Event Breaking Analysis
-index=* earliest=-1h
-| stats avg(linecount) as avg_lines, max(linecount) as max_lines by sourcetype
-| where max_lines > 100 OR avg_lines > 10
-| sort - max_lines
-```
-
-```spl
-| Field Extraction Coverage
-| tstats count where index=* by sourcetype
-| join type=left sourcetype [
-    | rest /services/data/props/extractions
-    | stats count as extraction_count by stanza
-    | rename stanza as sourcetype
-]
-| eval extraction_coverage=if(extraction_count>0, "Yes", "No")
-| table sourcetype, count, extraction_coverage
-```
-
-### 5.4 Recommended Props/Transforms Enhancements
-
-```ini
-# props.conf - Recommended additions
-
-[source::...network_device...]
-TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%6N%z
-MAX_TIMESTAMP_LOOKAHEAD = 32
-LINE_BREAKER = ([\r\n]+)
-SHOULD_LINEMERGE = false
-TRUNCATE = 10000
-
-[source::...application_log...]
-TIME_FORMAT = %Y-%m-%d %H:%M:%S,%3N
-TZ = UTC
-TRANSFORMS-routing = route_by_severity
-```
-
-### 5.5 Onboarding Process Recommendations
-
-**Current State:** Manual, 5-day average time-to-index
-**Target State:** Automated, <8 hour time-to-index
-
-**Improvement Actions:**
-
-1. Create standardized onboarding templates library
-2. Implement automated validation testing
-3. Deploy self-service onboarding portal
-4. Establish data quality SLAs per sourcetype
-## 🧠 6. Enterprise Security (ES) Domain
-
-### 6.1 ES Deployment Overview
+### 5.1 ES Deployment Overview
 
 | **Metric**            | **Value** | **Status**                  |
 | --------------------- | --------- | --------------------------- |
@@ -400,7 +390,80 @@ TRANSFORMS-routing = route_by_severity
 | Notable Events (30d)  | 45,230    | -                           |
 | MITRE ATT&CK Coverage | 47%       | 🟡 Below target             |
 
-### 6.2 Correlation Search Performance
+### 5.2 Dashboard Panels — ES Health
+
+The **Enterprise Security Health Dashboard** includes:
+
+**Section: ES Overview KPIs**
+| **Panel** | **SPL Source** | **Thresholds** |
+|-----------|----------------|----------------|
+| 🔢 Total Correlation Searches | `rest /servicesNS/-/-/saved/searches` filtered by ES apps + Rule/Threat/Correlation names | Blue block |
+| ✅ Enabled Correlations | Same REST endpoint, `is_scheduled=1 disabled=0` | Green block |
+| ⛔ Disabled Correlations | Same REST endpoint, `is_scheduled=1 disabled=1` | Yellow block |
+
+**Section: Correlation Performance KPIs**
+| **Panel** | **SPL Source** | **Thresholds** |
+|-----------|----------------|----------------|
+| ✅ Correlation Success Rate | `index=_internal sourcetype=scheduler` — success/total % | Red<95%, Yellow<98%, Green≥98% |
+| ⏭️ Skipped Correlations | `status="skipped"` count | Green<2, Yellow<5, Red≥5 |
+| ⏱️ Avg Correlation Runtime | `avg(run_time)` for successful runs | Green<30s, Yellow<60s, Red≥60s |
+| 🔴 Max Runtime | `max(run_time)` for successful runs | Green<120s, Yellow<300s, Red≥300s |
+
+**Section: Data Model Acceleration**
+| **Panel** | **SPL Source** |
+|-----------|----------------|
+| 📊 Data Models | `rest /servicesNS/-/-/datamodel/model` — total count |
+| ✅ Accelerated Data Models | REST filtered by `acceleration.enabled=true` |
+| ❌ Non-Accelerated Models | `search NOT is_enabled=true` |
+| 📈 Acceleration Coverage % | `count(eval(is_enabled="true")) / count * 100` |
+
+**Section: Top Resource-Intensive Correlations**
+| **Panel** | **Details** |
+|-----------|-------------|
+| 🔥 Top 15 Resource-Intensive Correlation Searches | Table with impact rating (Critical/High/Medium/Low), avg runtime, max runtime, runs, and recommendations |
+
+**SPL Pattern for Impact Classification:**
+
+```spl
+| eval impact=case(
+    avg_runtime>120, "🔴 Critical",
+    avg_runtime>60, "🟠 High",
+    avg_runtime>30, "🟡 Medium",
+    1=1, "🟢 Low")
+| eval recommendation=case(
+    avg_runtime>120, "Tune time range or add acceleration",
+    avg_runtime>60, "Optimize joins/lookups",
+    avg_runtime>30, "Review for efficiency",
+    1=1, "Acceptable")
+```
+
+**Section: Notable Event Analytics**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📊 Notable Events Count | Single Value (total `notable` events) |
+| 📊 High Urgency Notables | Single Value — `urgency IN ("critical","high")` |
+| 📈 Avg Notables per Day | Single Value with daily average |
+| 📊 Unique Rules Firing | Single Value — `dc(rule_name)` |
+| 📊 Triage Rate (%) | Single Value — closed_count/total % |
+| 🔴 False Positive Rate (%) | Single Value — FP count/total % |
+| 📈 Notable Event Trend by Urgency | Area Chart with urgency breakdown |
+| 📊 Top Notable Events by Rule Name | Table with rule name, count, severity |
+
+**Section: Correlation Scheduler Health**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Correlation Search Runtime Trend | Line Chart — `timechart avg(run_time)` by search name |
+| 📊 Notable Events by Urgency | Pie Chart with color-coded urgency levels |
+
+**Section: 🔥 Advanced ES Analytics**
+| **Panel** | **Visualization** | **Key Details** |
+|-----------|-------------------|-----------------|
+| 🔥 Correlation Search Execution Heatmap | GitHub-style Day × Hour matrix (7-day) | Color: Green→Yellow→Red (0-50-100 executions) |
+| 🔥 Notable Events Heatmap | GitHub-style Day × Hour matrix (7-day) | Color: Green→Yellow→Red (0-25-50 notables) |
+| 💎 Correlation Performance Bubble Chart | Bubble Chart | X=Avg Runtime, Y=Skip Count, Size=Risk Score |
+| 📊 Correlation Search Status Distribution | Horizontal Bar Chart | Success/Skipped/Failed with color coding |
+
+### 5.3 Correlation Search Performance Analysis
 
 **Top 10 Resource-Intensive Correlation Searches:**
 
@@ -417,38 +480,7 @@ TRANSFORMS-routing = route_by_severity
 | Insider Threat           | 58 sec          | Medium         | Tune thresholds    |
 | Unauthorized Access      | 54 sec          | Medium         | Add filters        |
 
-### 6.3 ES Performance SPL Queries
-
-```spl
-| Correlation Search Execution Stats
-index=_internal sourcetype=scheduler savedsearch_name=* status=*
-| search savedsearch_name="*- Rule"
-| stats avg(run_time) as avg_runtime,
-        max(run_time) as max_runtime,
-        count(eval(status="skipped")) as skipped_count,
-        count as total_runs
-    by savedsearch_name
-| eval efficiency=round((total_runs-skipped_count)/total_runs*100,1)
-| sort - avg_runtime
-| head 25
-```
-
-```spl
-| Data Model Acceleration Status
-| rest /services/datamodel/acceleration
-| table title, acceleration.enabled, acceleration.earliest_time,
-       acceleration.cron_schedule, eai:acl.app
-| search acceleration.enabled=1
-```
-
-```spl
-| Notable Event Volume Trend
-index=notable
-| timechart span=1d count by urgency
-| addtotals
-```
-
-### 6.4 ES Optimization Recommendations
+### 5.4 ES Optimization Recommendations
 
 | **Action**                           | **Impact** | **Effort** | **Priority** |
 | ------------------------------------ | ---------- | ---------- | ------------ |
@@ -459,7 +491,7 @@ index=notable
 | Expand MITRE coverage to 80%         | High       | High       | P2           |
 | Upgrade to ES 7.3.2                  | Low        | Low        | P3           |
 
-### 6.5 Threat Detection Efficiency
+### 5.5 Threat Detection Efficiency
 
 **False Positive Analysis:**
 
@@ -473,12 +505,15 @@ index=notable
 2. Add adaptive thresholds using risk scoring
 3. Create feedback loop for analyst dismissals
 4. Tune whitelists based on historical patterns
-
 ---
 
-## 👥 7. Users, Roles & Access Management
+## 👥 6. Users, Roles & Access Management
 
-### 7.1 User Population Analysis
+> [!NOTE]
+> **Dashboard Reference:** `assessment_access_rbac.xml` (757 lines, 25+ panels)
+> Provides real-time user activity analysis, inactive account tracking, role distribution, and authentication monitoring with GitHub-style heatmaps.
+
+### 6.1 User Population Analysis
 
 | **User Category**  | **Count** | **% Total** | **Avg Searches/Day** |
 | ------------------ | --------- | ----------- | -------------------- |
@@ -491,19 +526,47 @@ index=notable
 | Service Accounts   | 8         | 1%          | 120                  |
 | **Total**          | **543**   | **100%**    | **28 avg**           |
 
-### 7.2 Role Analysis
+### 6.2 Dashboard Panels — Access & RBAC Monitoring
 
-| **Role**     | **Users** | **Capabilities**   | **Risk Level** |
-| ------------ | --------- | ------------------ | -------------- |
-| admin        | 12        | Full access        | 🔴 High        |
-| sc_admin     | 8         | Splunk Cloud admin | 🔴 High        |
-| ess_analyst  | 85        | ES full access     | 🟡 Medium      |
-| power        | 68        | Create dashboards  | 🟡 Medium      |
-| user         | 245       | Read access        | 🟢 Low         |
-| can_delete   | 5         | Delete permissions | 🔴 High        |
-| Custom Roles | 120       | Various            | 🟡 Review      |
+**Section: User Account KPIs**
+| **Panel** | **SPL Source** | **Visualization** |
+|-----------|----------------|-------------------|
+| 👥 Total Users | `rest /services/authentication/users` — count | Single Value (Blue) |
+| 🔴 Admin Accounts | REST filtered by `roles="admin" OR roles="sc_admin"` | Single Value — thresholds 10/15 |
+| 📊 Total Roles | `rest /services/authorization/roles` — count | Single Value (Blue) |
+| 📊 Inactive Users (90+ Days) | REST join with `_audit action=login`, `days_inactive > 90` | Single Value — thresholds 10/50 |
 
-### 7.3 RBAC Maturity Scorecard
+**Section: Authentication KPIs**
+| **Panel** | **SPL Pattern** | **Thresholds** |
+|-----------|-----------------|----------------|
+| ✅ Successful Logins | `index=_audit action=success info=succeeded "tag::eventtype"=authentication` | Green block |
+| 🔴 Failed Logins | `index=_audit action=failure info=failed "tag::eventtype"=authentication` | Green<10, Yellow<50, Red≥50 |
+| 📊 Auth Failure Rate | Combined `info=succeeded OR info=failed` with % calculation | Green<5%, Yellow<15%, Red≥15% |
+| 🔴 Bruteforce Attempts | Failed logins `where count > 5` per user | Red block |
+
+> [!IMPORTANT]
+> Authentication queries use the updated SPL pattern:
+> - **Success:** `index=_audit action=success info=succeeded "tag::eventtype"=authentication`
+> - **Failure:** `index=_audit action=failure info=failed "tag::eventtype"=authentication`
+> - This ensures proper CIM-compliant event matching.
+
+**Section: User Activity Analysis**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 🔥 Login Activity Heatmap (GitHub-style) | Day × Hour matrix (7 days) with full 168-cell matrix |
+| 📊 User Role Distribution | Horizontal Bar Chart by role with user counts |
+| 📊 Top 20 Most Active Users | Table with search count, last activity, and role |
+
+**Section: Detailed Analytics**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📊 Inactive User Report | Table — users with 90+ days since last login, with roles |
+| 📈 Login Trend by Status | Line Chart — success vs failure logins over time |
+| 📊 Role Capability Analysis | Table — roles with capabilities, imported roles, user count |
+| 📈 Authentication Failure Trend | Column Chart — failed logins by hour |
+| 🔴 Top Failed Login Attempts | Table — user, source IPs, attempt count, severity rating |
+
+### 6.3 RBAC Maturity Scorecard
 
 | **Criterion**          | **Score**  | **Status** | **Notes**                      |
 | ---------------------- | ---------- | ---------- | ------------------------------ |
@@ -517,39 +580,7 @@ index=notable
 | Audit Logging          | 75/100     | 🟢         | Basic audit enabled            |
 | **Overall RBAC Score** | **67/100** | 🟡         | **Improvement needed**         |
 
-### 7.4 Access Audit SPL Queries
-
-```spl
-| Inactive Users (90+ days)
-| rest /services/authentication/users
-| join type=left realname [
-    | search index=_audit action=login
-    | stats latest(_time) as last_login by user
-    | rename user as realname
-]
-| eval days_inactive=round((now()-last_login)/86400,0)
-| where days_inactive > 90 OR isnull(last_login)
-| table realname, roles, days_inactive
-| sort - days_inactive
-```
-
-```spl
-| High Privilege Account Activity
-| search index=_audit (action=login OR action=search)
-| search user IN (admin, sc_admin, ess_admin)
-| stats count by user, action, info
-| sort - count
-```
-
-```spl
-| Role Distribution Analysis
-| rest /services/authentication/users
-| mvexpand roles
-| stats count by roles
-| sort - count
-```
-
-### 7.5 Access Management Recommendations
+### 6.4 Access Management Recommendations
 
 | **Action**                    | **Impact** | **Effort** | **Priority** |
 | ----------------------------- | ---------- | ---------- | ------------ |
@@ -561,9 +592,9 @@ index=notable
 
 ---
 
-## 📈 8. Storage & Retention Strategy
+## 📈 7. Storage & Retention Strategy
 
-### 8.1 Storage Tier Configuration
+### 7.1 Storage Tier Configuration
 
 | **Tier** | **Retention** | **Storage Type**  | **Purpose**           |
 | -------- | ------------- | ----------------- | --------------------- |
@@ -572,7 +603,7 @@ index=notable
 | Cold     | 90 days       | S3 Object Storage | Historical analysis   |
 | Frozen   | 7 years       | S3 Archival       | Compliance/DDAA       |
 
-### 8.2 Storage Utilization (Estimated)
+### 7.2 Storage Utilization (Estimated)
 
 | **Index Category** | **Daily Ingest** | **Retention** | **Storage Est.** |
 | ------------------ | ---------------- | ------------- | ---------------- |
@@ -582,14 +613,26 @@ index=notable
 | Network            | 1.9 TB           | 14 days       | ~27 TB           |
 | **Total**          | **14 TB**        | **Varies**    | **~830 TB**      |
 
-### 8.3 SmartStore Recommendations
+### 7.3 Storage Monitoring in Dashboards
+
+The **Executive Overview Dashboard** includes real-time storage KPIs:
+
+| **Panel**                   | **Metric**                          |
+| --------------------------- | ----------------------------------- |
+| 📦 DDAA Entitlement (Quota) | Dynamic Archive Allocation in GB    |
+| 📦 DDAA Current Usage       | Active archive usage vs entitlement |
+| 💾 DDAS Storage Entitlement | Searchable storage tier allocation  |
+| 💾 DDAS Current Usage       | Storage tier current consumption    |
+| 📦 Searchable Storage Used  | Total searchable storage (TB)       |
+
+### 7.4 SmartStore Recommendations
 
 1. **Cache Sizing:** Ensure hot/warm cache supports 10-day lookback performance
 2. **Object Storage:** Enable lifecycle policies for cost optimization
 3. **DDAA:** Implement for frozen tier to enable archive searches
 4. **Monitoring:** Deploy cache hit/miss tracking dashboards
 
-### 8.4 Cost Optimization Opportunities
+### 7.5 Cost Optimization Opportunities
 
 | **Opportunity**                   | **Savings** | **Trade-off**                |
 | --------------------------------- | ----------- | ---------------------------- |
@@ -597,20 +640,74 @@ index=notable
 | Implement DDAA for >90 day        | 25% cost    | Slower archive searches      |
 | Compress cold tier                | 20% storage | CPU overhead                 |
 | Tier application logs by severity | 10% storage | Requires parsing changes     |
-## 📊 9. Monitoring & Health Checks
+---
 
-### 9.1 Current Monitoring State
+## 💻 8. Platform Health & Monitoring
 
-| **Monitoring Area** | **Status**  | **Coverage** | **Gap**                    |
-| ------------------- | ----------- | ------------ | -------------------------- |
-| Indexer Health      | ⚠️ Limited  | 60%          | No custom alerts           |
-| Search Head Health  | ✅ Basic    | 75%          | Missing performance alerts |
-| Forwarder Health    | ⚠️ Partial  | 50%          | No HF monitoring           |
-| License Usage       | ⚠️ Reactive | 40%          | No predictive alerts       |
-| Queue Health        | ❌ Missing  | 20%          | No backpressure alerts     |
-| Ingest Latency      | ⚠️ Partial  | 55%          | Limited coverage           |
+> [!NOTE]
+> **Dashboard Reference:** `assessment_platform_health.xml` (697 lines, 30+ panels)
+> Comprehensive monitoring of search heads, indexers, queues, forwarders, and error detection — organized into 5 logical sections with color-coded severity indicators.
 
-### 9.2 Critical Health Metrics to Monitor
+### 8.1 Dashboard Panels — Platform Health Monitoring
+
+**Section: Search Head Health KPIs**
+| **Panel** | **SPL Source** | **Thresholds** |
+|-----------|----------------|----------------|
+| 🔍 Active Search Heads | `rest /services/shcluster/status` — peer count via transpose | Blue info block |
+| 🟢 SHC Status | `rest /services/shcluster/status` — captain flags | Healthy/Initializing/Issue |
+| 📊 Search Concurrency | `index=_internal source=*metrics.log group=search_concurrency` — active/max % | Green<60%, Yellow<80%, Red≥80% |
+| ⏭️ Skipped Searches | `index=_internal sourcetype=scheduler status="skipped"` | Green<2, Yellow<5, Red≥5 |
+| 💻 SH CPU Utilization | `index=_introspection component=Hostwide` — cpu_system_pct + cpu_user_pct | Green<60%, Yellow<80%, Red≥80% |
+| 🧠 SH Memory Usage | `index=_introspection component=Hostwide` — mem_used/mem % | Green<75%, Yellow<90%, Red≥90% |
+| 🔀 Search Concurrency % | `active_hist_searches / max_hist_searches` | Green<60%, Yellow<80%, Red≥80% |
+| 🔴 SH Errors | `index=_internal log_level=ERROR` count | Green<50, Yellow<200, Red≥200 |
+
+**Section: SH Resource Trend & Issues**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 SH Resource Utilization Trend | Line Chart — CPU % + Memory % at 5-min intervals |
+| ⚠️ SH Issues & Warnings | Table — top 20 errors/warnings by host, component, severity (color-coded) |
+
+**Section: Indexer Cluster Health**
+| **Panel** | **SPL Source** |
+|-----------|----------------|
+| 🔍 Active Indexers | `index=_introspection component=Hostwide` — `dc(host)` |
+| 🟢 Cluster Status | Error-based health inference (>500=Critical, >100=Degraded) |
+| 📈 Indexing Events Rate | `index=_internal component=Metrics group=thruput name=thruput` — eps |
+| 📊 Indexing KB Rate | Same thruput source — `instantaneous_kbps` |
+| 💻 Indexer CPU Utilization | `index=_introspection component=Hostwide` — CPU % |
+| 🧠 Indexer Memory Usage | `index=_introspection component=Hostwide` — Memory % |
+| 🔍 Indexer Disk I/O | `index=_introspection component=IOStats` — reads + writes MB/s |
+| 🔴 Indexer Errors | `index=_internal log_level=ERROR` count |
+
+**Section: Indexer Trends & Issues**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Indexer Resource Trend | Line Chart — CPU % + Memory % at 5-min intervals |
+| ⚠️ Indexer Issues & Warnings | Table — top 20 errors/warnings with severity color coding |
+
+**Section: Queue Health Monitoring**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Queue Fill Trend | Line Chart — parsingQueue, indexQueue, typingQueue fill % over time |
+| 📦 Queue Status by Type | Table — avg size, max size, capacity, fill %, health status |
+
+**Section: Forwarder Connectivity**
+| **Panel** | **SPL Source** |
+|-----------|----------------|
+| 📡 Active Forwarders (Last 15 min) | `index=_internal sourcetype=splunkd group=tcpin_connections` — `dc(hostname)` |
+| 📊 Total Connections | Same source — total connection events |
+| 📈 Avg Throughput | Same source — `avg(kb)` per connection |
+| 🔴 Connection Errors | `index=_internal log_level=ERROR (group=tcpin OR group=tcpout)` |
+| 📋 Top Forwarders by Volume | Table — hostname, volume (MB), connections, last seen |
+
+**Section: Error Monitoring & Issue Discovery**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Error Trend by Host Type | Stacked Column Chart — Search Heads vs Indexers vs Other |
+| 🔴 Critical Errors by Component | Table — severity, host, component, error count |
+
+### 8.2 Critical Health Metrics
 
 | **Metric**             | **Threshold** | **Alert Priority** |
 | ---------------------- | ------------- | ------------------ |
@@ -623,58 +720,25 @@ index=notable
 | ES correlation skips   | >5/day        | P2 High            |
 | Data model build lag   | >1 hour       | P3 Medium          |
 
-### 9.3 Health Monitoring SPL Queries
-
-```spl
-| Queue Backpressure Alert
-index=_internal sourcetype=splunkd component=Metrics group=queue
-| stats avg(current_size) as avg_queue, max(current_size) as max_queue by name
-| where max_queue > 10000
-| eval alert_level=case(max_queue>50000, "CRITICAL", max_queue>10000, "WARNING")
-```
-
-```spl
-| Indexer Acknowledgment Latency
-index=_internal sourcetype=splunkd component=TcpInputConfig
-| stats avg(tcp_eps) as events_per_sec, avg(ack_latency) as ack_delay by host
-| where ack_delay > 30
-```
-
-```spl
-| Forwarder Connectivity Status
-| rest /services/deployment/server/clients
-| stats count by clientName, lastPhoneHomeTime
-| eval hours_since_checkin=round((now()-strptime(lastPhoneHomeTime,"%Y-%m-%dT%H:%M:%S"))/3600,1)
-| where hours_since_checkin > 1
-| sort - hours_since_checkin
-```
-
-```spl
-| Search Health Overview
-index=_internal sourcetype=scheduler status=*
-| stats count(eval(status="success")) as success,
-        count(eval(status="skipped")) as skipped,
-        count(eval(status="deferred")) as deferred,
-        count as total
-| eval success_rate=round(success/total*100,1)
-| eval alert=if(success_rate<95, "WARNING", "OK")
-```
-
-### 9.4 Monitoring Recommendations
+### 8.3 Monitoring Recommendations
 
 | **Action**                          | **Priority** | **Effort** |
 | ----------------------------------- | ------------ | ---------- |
-| Deploy custom health dashboard      | P1           | Medium     |
+| Deploy custom health dashboard      | P1           | ✅ Done    |
 | Implement queue backpressure alerts | P1           | Low        |
 | Add license predictive alerting     | P1           | Medium     |
-| Create forwarder health monitoring  | P2           | Medium     |
+| Create forwarder health monitoring  | P2           | ✅ Done    |
 | Implement proactive capacity alerts | P2           | Medium     |
 
 ---
 
-## 🔐 10. Security & Platform Hardening
+## 🔐 9. Security & Platform Hardening
 
-### 10.1 Security Posture Assessment
+> [!NOTE]
+> **Dashboard Reference:** `assessment_security_posture.xml` (787 lines, 25+ panels)
+> Security monitoring with risky command audit, configuration change tracking, authentication analytics, and advanced heatmap visualizations.
+
+### 9.1 Security Posture Assessment
 
 | **Control Area**          | **Score**  | **Status**            |
 | ------------------------- | ---------- | --------------------- |
@@ -687,303 +751,375 @@ index=_internal sourcetype=scheduler status=*
 | Certificate Management    | 80/100     | 🟢 Good               |
 | **Overall Security**      | **79/100** | 🟢 Good               |
 
-### 10.2 SPL Security Risks
+### 9.2 Dashboard Panels — Security Posture
+
+**Section: Security Overview KPIs**
+| **Panel** | **SPL Pattern** | **Thresholds** |
+|-----------|-----------------|----------------|
+| 🔴 Auth Failures | `index=_audit action=failure info=failed "tag::eventtype"=authentication` | Green<10, Yellow<50, Red≥50 |
+| 🔴 Risky Commands Used | Updated pattern with exclusions (see below) | Green<5, Yellow<20, Red≥20 |
+| 🔧 Config Changes | `index=_audit action=edit OR action=create OR action=delete` | Blue info block |
+| 🔴 Admin Account Count | REST with `roles="admin" OR roles="sc_admin"` | Green<10, Yellow<15, Red≥15 |
+
+**Risky Command Detection — Updated SPL Pattern:**
+
+```spl
+index=_audit action=search info=completed
+    NOT user IN ("splunk-system-user")
+    NOT app IN (godaddy_health)
+| eval search_query=coalesce(search, search_string)
+| where match(search_query,"(?i)\|\s*(delete|collect|dboutput|script|sendemail)\b")
+| stats count
+```
+
+> [!IMPORTANT]
+> **Key improvements in risky command detection:**
+>
+> - Excludes `splunk-system-user` and `godaddy_health` app (noise reduction)
+> - Uses `coalesce(search, search_string)` for robust field extraction
+> - Regex matches `delete`, `collect`, `dboutput`, `script`, `sendemail`
+> - Consistent across all 4 risky command panels
+
+**Section: Risky Command Analytics**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📊 Risky Command Usage by User | Table — user, executions, first/last seen, risk level |
+| 📊 Risky Commands Breakdown | Pie Chart — distribution by command type |
+
+**Section: Configuration Change Tracking**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📋 Recent Configuration Changes | Table — time, user, action, object, details (last 50) |
+| 📈 Configuration Changes by User | Stacked Bar Chart by user and action type |
+| 📈 Change Activity Trend | Column Chart — edit/create/delete by hour |
+
+**Section: Authentication Analytics**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 🔴 Top Failed Login Attempts | Table — severity, user, attempts, source IPs, last attempt |
+| 📈 Authentication Trend | Area Chart — success vs failure over time |
+| 📊 Logins by User (Top 20) | Horizontal Bar Chart |
+
+**Section: Correlation Search Monitoring**
+| **Panel** | **Visualization** |
+|-----------|-------------------|
+| 📈 Correlation Search Runtime Trend | Line Chart — avg runtime by search name over time |
+
+**Section: 🔥 Advanced Security Analytics**
+| **Panel** | **Visualization** | **Key Details** |
+|-----------|-------------------|-----------------|
+| 🔥 Authentication Failure Heatmap | GitHub-style Day × Hour matrix (7-day) | Color: Green→Yellow→Red (0-50-100 failures) |
+| 🔥 Risky Command Activity Heatmap | GitHub-style Day × Hour matrix (7-day) | Color: Green→Yellow→Red (0-50-100 commands) |
+| 💎 Security Event Bubble Chart | Bubble Chart | Config Changes vs Auth Failures with size=Risk Score |
+| 📊 User Risk Distribution | Horizontal Bar Chart | Top 15 users by combined risk score |
+
+### 9.3 SPL Security Risks
 
 **Risky Commands Assessment:**
 
-| **Command**      | **Risk Level** | **Current Control** | **Recommendation** |
-| ---------------- | -------------- | ------------------- | ------------------ |
-| `delete`         | 🔴 High        | Role-restricted     | Audit all usage    |
-| `collect`        | 🟡 Medium      | No restriction      | Add role control   |
-| `outputlookup`   | 🟡 Medium      | Limited             | Review permissions |
-| `sendemail`      | 🟡 Medium      | Role-restricted     | Audit recipients   |
-| `script`         | 🔴 High        | Disabled            | Maintain disabled  |
-| `runshellscript` | 🔴 High        | Disabled            | Maintain disabled  |
+| **Command** | **Risk Level** | **Current Control** | **Recommendation** |
+| ----------- | -------------- | ------------------- | ------------------ |
+| `delete`    | 🔴 High        | Role-restricted     | Audit all usage    |
+| `collect`   | 🟡 Medium      | No restriction      | Add role control   |
+| `dboutput`  | 🟡 Medium      | Limited             | Review permissions |
+| `sendemail` | 🟡 Medium      | Role-restricted     | Audit recipients   |
+| `script`    | 🔴 High        | Disabled            | Maintain disabled  |
 
-### 10.3 Security Audit SPL Queries
+### 9.4 Hardening Recommendations
 
-```spl
-| Risky Command Usage Audit
-index=_audit action=search search=*
-| rex field=search "(?<risky_cmd>delete|collect|outputlookup|sendemail)"
-| search risky_cmd=*
-| stats count by user, risky_cmd, host
-| sort - count
-```
+| **Control**          | **Current**    | **Recommendation**         | **Priority** |
+| -------------------- | -------------- | -------------------------- | ------------ |
+| Risky commands       | Partial        | Restrict collect/dboutput  | P1           |
+| Session timeout      | 24 hours       | Reduce to 8 hours          | P2           |
+| IP allowlisting      | Not configured | Implement for admin access | P2           |
+| Audit retention      | 30 days        | Extend to 90 days          | P2           |
+| Certificate rotation | Annual         | Quarterly rotation         | P3           |
+---
 
-```spl
-| Configuration Change Audit
-index=_audit action=edit_*
-| stats count by action, object, user
-| sort - count
-```
+## 📊 10. Key Performance Indicators (KPIs)
 
-```spl
-| Authentication Failure Analysis
-index=_audit action=login info=failed
-| stats count by user, clientip, reason
-| where count > 5
-| sort - count
-```
+### 10.1 Assessment Dashboard Thresholds Reference
 
-### 10.4 Hardening Recommendations
+All dashboards follow a standardized color-coded threshold system:
 
-| **Control**          | **Current**    | **Recommendation**            | **Priority** |
-| -------------------- | -------------- | ----------------------------- | ------------ |
-| Risky commands       | Partial        | Restrict collect/outputlookup | P1           |
-| Session timeout      | 24 hours       | Reduce to 8 hours             | P2           |
-| IP allowlisting      | Not configured | Implement for admin access    | P2           |
-| Audit retention      | 30 days        | Extend to 90 days             | P2           |
-| Certificate rotation | Annual         | Quarterly rotation            | P3           |
+| **Color** | **Hex Code** | **Meaning** | **Action Required** |
+| --------- | ------------ | ----------- | ------------------- |
+| 🟢 Green  | `#65a637`    | Healthy     | None                |
+| 🟡 Yellow | `#f7bc38`    | Warning     | Investigation       |
+| 🔴 Red    | `#d93f3c`    | Critical    | Immediate action    |
+| 🔵 Blue   | `#1e93ff`    | Info/Accent | Informational       |
+| 🟢 Teal   | `#4ECDC4`    | Secondary   | Informational       |
+
+### 10.2 KPI Threshold Matrix by Domain
+
+**Licensing & SVC:**
+
+| **KPI**               | **Green** | **Yellow** | **Red**  |
+| ---------------------- | --------- | ---------- | -------- |
+| SVC Utilization %      | <80%      | 80-95%     | >95%     |
+| Daily Ingest vs Limit  | <85%      | 85-95%     | >95%     |
+| SVC Overage Days (30d) | 0         | 1-2        | >2       |
+
+**Search Performance:**
+
+| **KPI**                  | **Green** | **Yellow** | **Red**  |
+| ------------------------ | --------- | ---------- | -------- |
+| Search Success Rate      | >98%      | 90-98%     | <90%     |
+| Avg Search Latency       | <30 sec   | 30-60 sec  | >60 sec  |
+| Search Concurrency       | <60%      | 60-80%     | >80%     |
+| Skipped Searches/Day     | <2        | 2-5        | >5       |
+| Long-Running (>5 min)    | <20       | 20-50      | >50      |
+
+**Platform Health:**
+
+| **KPI**              | **Green** | **Yellow** | **Red**  |
+| -------------------- | --------- | ---------- | -------- |
+| CPU Utilization %    | <60%      | 60-80%     | >80%     |
+| Memory Usage %       | <75%      | 75-90%     | >90%     |
+| Queue Fill %         | <60%      | 60-80%     | >80%     |
+| Forwarder Uptime     | >99%      | 98-99%     | <98%     |
+
+**Enterprise Security:**
+
+| **KPI**                    | **Green** | **Yellow** | **Red**  |
+| -------------------------- | --------- | ---------- | -------- |
+| Correlation Success Rate   | >98%      | 95-98%     | <95%     |
+| Avg Correlation Runtime    | <30 sec   | 30-60 sec  | >60 sec  |
+| Max Correlation Runtime    | <120 sec  | 120-300 sec| >300 sec |
+| Notable Triage Rate        | >90%      | 70-90%     | <70%     |
+| False Positive Rate        | <15%      | 15-25%     | >25%     |
+| Skipped Correlations/Day   | <2        | 2-5        | >5       |
+
+**Access Management:**
+
+| **KPI**                   | **Green** | **Yellow** | **Red**  |
+| ------------------------- | --------- | ---------- | -------- |
+| Inactive Users (90d)      | <10       | 10-50      | >50      |
+| Admin Account Count       | <10       | 10-15      | >15      |
+| Auth Failures (period)    | <10       | 10-50      | >50      |
+| Auth Failure Rate         | <5%       | 5-15%      | >15%     |
+
+**Security Posture:**
+
+| **KPI**               | **Green** | **Yellow** | **Red**  |
+| ---------------------- | --------- | ---------- | -------- |
+| Risky Commands Used    | <5        | 5-20       | >20      |
+| Auth Failures          | <10       | 10-50      | >50      |
+| Admin Accounts         | <10       | 10-15      | >15      |
+
+### 10.3 Advanced Visualization Features
+
+All dashboards implement the following advanced visualization patterns:
+
+**GitHub-Style Heatmaps (Day × Hour Matrix):**
+- Used in: License Consumption, Search Performance, ES Health, Access & RBAC, Security Posture
+- Pattern: 7 rows (Monday–Sunday) × 24 columns (00–23)
+- Full 168-cell matrix via `appendpipe` + `makemv` + `mvexpand`
+- Color scaling: `minMidMax` with Green(min) → Yellow(mid) → Red(max)
+
+**Bubble Charts:**
+- Used in: ES Health (Correlation Performance), Security Posture (Event Distribution)
+- Dimensions: X=metric1, Y=metric2, Size=risk/impact score
+- Max bubble size: 50
+
+**Horizontal Bar Charts:**
+- Used in: License Consumption (Top Sourcetypes), Access & RBAC (Role Distribution), Security Posture (User Risk)
+- Top N: 15–20 items with descending sort
 
 ---
 
-## 📈 11. KPIs & Success Metrics
+## 🎯 11. Detailed Action Plan
 
-### 11.1 Platform Health KPIs
-
-| **KPI**                | **Current** | **30-Day Target** | **90-Day Target** |
-| ---------------------- | ----------- | ----------------- | ----------------- |
-| Search Success Rate    | 94.2%       | 96%               | 98%               |
-| Avg Search Latency     | 12.4 sec    | 10 sec            | 8 sec             |
-| P95 Search Latency     | 45 sec      | 35 sec            | 25 sec            |
-| Skipped Searches/Day   | 11          | 5                 | <2                |
-| License Utilization    | 90%         | 85%               | 80%               |
-| License Overages/Month | 3           | 1                 | 0                 |
-
-### 11.2 Security Operations KPIs
-
-| **KPI**                    | **Current** | **30-Day Target** | **90-Day Target** |
-| -------------------------- | ----------- | ----------------- | ----------------- |
-| MITRE ATT&CK Coverage      | 47%         | 55%               | 80%               |
-| False Positive Rate        | 32%         | 25%               | 15%               |
-| Mean Time to Detect (MTTD) | 45 min      | 30 min            | 15 min            |
-| Correlation Search Success | 92%         | 96%               | 99%               |
-| Notable Triage Rate        | 65%         | 80%               | 95%               |
-
-### 11.3 Operational KPIs
-
-| **KPI**              | **Current** | **30-Day Target** | **90-Day Target** |
-| -------------------- | ----------- | ----------------- | ----------------- |
-| Data Onboarding Time | 5 days      | 3 days            | <8 hours          |
-| Parsing Error Rate   | 18%         | 10%               | 5%                |
-| Forwarder Uptime     | 97%         | 98.5%             | 99.5%             |
-| User Satisfaction    | 72%         | 80%               | 90%               |
-
-### 11.4 SLA/SLO Recommendations
-
-| **Service**         | **SLO Metric** | **Target** | **Measurement** |
-| ------------------- | -------------- | ---------- | --------------- |
-| Search Availability | Uptime         | 99.7%      | Monthly         |
-| Search Performance  | P95 Latency    | <30 sec    | Weekly          |
-| Data Freshness      | Ingest Lag     | <5 min     | Daily           |
-| ES Detection        | Alert Latency  | <15 min    | Continuous      |
-| License Compliance  | Usage vs Alloc | <95%       | Daily           |
----
-
-## 📌 12. Prioritized Action Plan
-
-### 12.1 Impact/Effort Matrix
+### 11.1 Priority Matrix
 
 ```
-                    LOW EFFORT                    HIGH EFFORT
-           ┌─────────────────────────┬─────────────────────────┐
-           │                         │                         │
-   HIGH    │  🎯 QUICK WINS          │  ⭐ STRATEGIC           │
-   IMPACT  │  • License alerts       │  • Workload Management  │
-           │  • Disable inactive     │  • Correlation tuning   │
-           │    accounts             │  • Search optimization  │
-           │  • Disable low-value    │  • MITRE expansion      │
-           │    correlations         │  • Onboarding automation│
-           ├─────────────────────────┼─────────────────────────┤
-           │                         │                         │
-   LOW     │  ✅ FILL-INS            │  ⏳ LONG-TERM           │
-   IMPACT  │  • ES upgrade to 7.3.2  │  • Federated search     │
-           │  • Session timeout      │  • ML analytics         │
-           │  • Audit log extension  │  • FinOps framework     │
-           │  • Certificate rotation │  • Self-service portal  │
-           └─────────────────────────┴─────────────────────────┘
+        HIGH IMPACT
+            │
+   P1 ──────┼────── P2
+   Quick     │      Strategic
+   Wins      │      Projects
+            │
+─────────────┼───────────────
+            │
+   P3 ──────┼────── P4
+   Low       │      Backlog
+   Priority  │      Items
+            │
+         LOW IMPACT
+  LOW EFFORT         HIGH EFFORT
 ```
 
-### 12.2 Detailed Action Items
+### 11.2 Phase 1 — Immediate Actions (0-30 Days)
 
-#### **Priority 1 - Critical (Week 1-2)**
+| **#** | **Action**                        | **Owner**       | **Status**  | **Impact** |
+| ----- | --------------------------------- | --------------- | ----------- | ---------- |
+| 1.1   | Deploy assessment dashboards      | Splunk Admin    | ✅ Complete | High       |
+| 1.2   | Implement Workload Management     | Splunk Admin    | ⏳ Pending  | Critical   |
+| 1.3   | Disable 127 inactive accounts     | Security Team   | ⏳ Pending  | High       |
+| 1.4   | Tune top 10 expensive ES searches | SOC Engineering | ⏳ Pending  | High       |
+| 1.5   | Deploy license overage alerts     | Splunk Admin    | ⏳ Pending  | High       |
+| 1.6   | Add search scheduling spread      | Splunk Admin    | ⏳ Pending  | Medium     |
 
-| **#** | **Action** | **Domain** | **Owner** | **Impact** | **Effort** |
-|-------|------------|------------|-----------|------------|------------|
-| 1.1 | Deploy license usage alerts (85/95/100%) | Licensing | Platform Team | High | Low |
-| 1.2 | Disable 127 inactive accounts | Access | Security Team | High | Low |
-| 1.3 | Disable 8 low-value correlation searches | ES | SOC Team | High | Low |
-| 1.4 | Implement Workload Management config | Performance | Platform Team | Very High | Medium |
-| 1.5 | Reduce admin role to <10 accounts | Access | Security Team | High | Low |
+### 11.3 Phase 2 — Optimization (30-90 Days)
 
-#### **Priority 2 - High (Week 2-4)**
+| **#** | **Action**                     | **Owner**       | **Status** | **Impact** |
+| ----- | ------------------------------ | --------------- | ---------- | ---------- |
+| 2.1   | Optimize remaining 40 searches | SOC Engineering | ⏳ Pending | High       |
+| 2.2   | Accelerate 10 data models      | Splunk Admin    | ⏳ Pending | High       |
+| 2.3   | Implement charge-back model    | FinOps/Splunk   | ⏳ Pending | Medium     |
+| 2.4   | Quarterly access reviews       | Security Team   | ⏳ Pending | High       |
+| 2.5   | Document all custom roles      | Security Team   | ⏳ Pending | Medium     |
+| 2.6   | SmartStore cache optimization  | Splunk Admin    | ⏳ Pending | Medium     |
 
-| **#** | **Action** | **Domain** | **Owner** | **Impact** | **Effort** |
-|-------|------------|------------|-----------|------------|------------|
-| 2.1 | Tune top 15 expensive correlation searches | ES | SOC Team | High | Medium |
-| 2.2 | Accelerate 10 additional data models | ES | Platform Team | High | Medium |
-| 2.3 | Optimize top 50 ad-hoc searches | Performance | Analytics Team | High | Medium |
-| 2.4 | Deploy custom health monitoring dashboard | Monitoring | Platform Team | High | Medium |
-| 2.5 | Implement 60-day auto-disable policy | Access | Security Team | Medium | Low |
+### 11.4 Phase 3 — Transformation (90-180 Days)
 
-#### **Priority 3 - Medium (Week 4-8)**
+| **#** | **Action**                    | **Owner**       | **Status** | **Impact** |
+| ----- | ----------------------------- | --------------- | ---------- | ---------- |
+| 3.1   | MITRE ATT&CK coverage to 80%  | SOC Engineering | ⏳ Pending | High       |
+| 3.2   | ML-based analytics enablement | Data Science    | ⏳ Pending | High       |
+| 3.3   | Federated search evaluation   | Splunk Admin    | ⏳ Pending | Medium     |
+| 3.4   | Automated data onboarding     | Platform Team   | ⏳ Pending | Medium     |
+| 3.5   | FinOps governance framework   | Management      | ⏳ Pending | High       |
 
-| **#** | **Action** | **Domain** | **Owner** | **Impact** | **Effort** |
-|-------|------------|------------|-----------|------------|------------|
-| 3.1 | Fix 18 sourcetypes with timestamp issues | Ingest | Data Team | Medium | Medium |
-| 3.2 | Implement queue backpressure alerts | Monitoring | Platform Team | Medium | Low |
-| 3.3 | Document SmartStore policies | Storage | Platform Team | Medium | Low |
-| 3.4 | Restrict risky SPL commands | Security | Security Team | Medium | Low |
-| 3.5 | Implement quarterly access reviews | Access | Security Team | High | Medium |
+### 11.5 Resource Requirements
 
-#### **Priority 4 - Planned (Week 8-16)**
+| **Resource**           | **Phase 1** | **Phase 2** | **Phase 3** |
+| ---------------------- | ----------- | ----------- | ----------- |
+| Splunk Admin (FTE)     | 0.5         | 0.5         | 0.25        |
+| SOC Engineer (FTE)     | 0.25        | 0.5         | 0.5         |
+| Security Analyst (FTE) | 0.25        | 0.25        | 0.25        |
+| External Consulting    | -           | Optional    | Recommended |
 
-| **#** | **Action** | **Domain** | **Owner** | **Impact** | **Effort** |
-|-------|------------|------------|-----------|------------|------------|
-| 4.1 | Develop data onboarding automation | Ingest | Data Team | High | High |
-| 4.2 | Expand MITRE coverage to 80% | ES | SOC Team | High | High |
-| 4.3 | Implement predictive license alerting | Licensing | Platform Team | Medium | Medium |
-| 4.4 | Scale HF pool to 12 nodes | Architecture | Platform Team | Medium | Medium |
-| 4.5 | Migrate syslog-ng to SC4S | Architecture | Data Team | Medium | High |
+### 11.6 Success Criteria
 
-### 12.3 Resource Requirements
-
-| **Phase** | **Platform Team** | **Security Team** | **SOC Team** | **Data Team** |
-|-----------|-------------------|-------------------|--------------|---------------|
-| Phase 1 (0-30d) | 40 hrs | 20 hrs | 15 hrs | 10 hrs |
-| Phase 2 (30-60d) | 60 hrs | 30 hrs | 40 hrs | 25 hrs |
-| Phase 3 (60-120d) | 80 hrs | 40 hrs | 60 hrs | 50 hrs |
-| **Total** | **180 hrs** | **90 hrs** | **115 hrs** | **85 hrs** |
-
-### 12.4 Success Criteria
-
-| **Milestone** | **Metric** | **Target** | **Timeline** |
-|---------------|------------|------------|--------------|
-| Quick Wins Complete | Actions 1.1-1.5 done | 100% | Week 2 |
-| License Stability | Zero overages | 0/month | Day 30 |
-| Search Performance | P95 < 35 sec | Achieved | Day 45 |
-| ES Optimization | Correlation success > 96% | Achieved | Day 60 |
-| Access Cleanup | Inactive accounts < 10 | Achieved | Day 30 |
+| **Domain**        | **Current**   | **30-Day Target** | **90-Day Target** | **180-Day Target** |
+| ----------------- | ------------- | ----------------- | ----------------- | ------------------ |
+| Health Score      | 68/100        | 75/100            | 82/100            | 88/100             |
+| SVC Utilization   | 90% peak/105% | <90%              | <85%              | <80%               |
+| Search Latency    | 12.4 sec avg  | <10 sec           | <8 sec            | <6 sec             |
+| ES Correlation FP | 32%           | 25%               | 15%               | <10%               |
+| MITRE Coverage    | 47%           | 55%               | 70%               | 80%                |
+| Inactive Accounts | 127           | <50               | <10               | <5                 |
+| Platform SLA      | 99.2%         | 99.4%             | 99.6%             | 99.7%              |
 
 ---
 
-## 📎 Appendix A: SPL Query Reference Library
+## 📎 Appendices
 
-### License & SVC Monitoring
+### Appendix A — Dashboard Files Inventory
 
-```spl
-| License Dashboard Base Search
-index=_internal source=*license_usage.log type=Usage
-| timechart span=1h sum(b) as bytes
-| eval GB=round(bytes/1024/1024/1024,2)
-```
+| **File**                                          | **Lines** | **Panels** | **Base Searches** | **Advanced Viz**                    |
+| ------------------------------------------------- | --------- | ---------- | ----------------- | ----------------------------------- |
+| `assessment_executive_overview.xml`               | 619       | 28         | 0                 | Color-coded top issues table        |
+| `assessment_license_consumption.xml`              | 1,065     | 30+        | 0                 | Heatmap, Area with overlays         |
+| `soc_search_performance_monitoring_dashboard.xml` | 1,564     | 40+        | 4                 | 2 Heatmaps, dynamic host resolution |
+| `assessment_es_health.xml`                        | 838       | 30+        | 0                 | 2 Heatmaps, Bubble chart            |
+| `assessment_access_rbac.xml`                      | 757       | 25+        | 0                 | Heatmap                             |
+| `assessment_platform_health.xml`                  | 697       | 30+        | 0                 | Trend lines, error tables           |
+| `assessment_security_posture.xml`                 | 787       | 25+        | 0                 | 2 Heatmaps, Bubble chart            |
+| **Total**                                         | **6,327** | **~208**   | **4**             | **Multiple per dashboard**          |
 
-```spl
-| SVC Consumption Estimator
-index=_introspection sourcetype=splunk_resource_usage
-    data.search_props.sid=* component=PerProcess
-| stats sum(data.mem_used) as mem_mb,
-        sum(data.elapsed) as elapsed_sec,
-        dc(data.search_props.sid) as search_count
-    by data.search_props.type
-| eval SVC_estimate=round((mem_mb/1024)*(elapsed_sec/3600),2)
-```
+### Appendix B — Common SPL Patterns Used Across Dashboards
 
-### Search Performance Monitoring
+**1. SVC Entitlement Query (with dynamic stack resolution):**
 
 ```spl
-| Expensive Searches Report
-index=_audit action=search info=granted
-| stats avg(total_run_time) as avg_runtime,
-        max(total_run_time) as max_runtime,
-        count as runs
-    by user, savedsearch_name
-| where avg_runtime > 60
-| sort - avg_runtime
+(index=_cmc_summary OR index=summary) source="splunk-svc"
+    [ rest /services/server/info splunk_server=local
+    | fields splunk_server
+    | rex field=splunk_server "^[^.]+[.](?<stack>[^.]+)"
+    | eval host="*." .stack. ".*splunk*"
+    | fields host]
+| stats max(stack_license_svc) as svc_license_entitlement
 ```
+
+**2. Authentication Events (CIM-Compliant):**
 
 ```spl
-| Search Concurrency Trend
-index=_internal sourcetype=splunk_resource_usage component=PerProcess
-| timechart span=5m dc(data.search_props.sid) as concurrent
-| where concurrent > 50
+| Successful Logins:
+index=_audit action=success info=succeeded "tag::eventtype"=authentication
+| stats count
+
+| Failed Logins:
+index=_audit action=failure info=failed "tag::eventtype"=authentication
+| stats count
 ```
 
-### ES Health Monitoring
+**3. Risky Command Detection (with noise exclusions):**
 
 ```spl
-| Correlation Search Health
-index=_internal sourcetype=scheduler savedsearch_name="*Rule*"
-| stats count(eval(status="success")) as success,
-        count(eval(status="skipped")) as skipped,
-        avg(run_time) as avg_runtime
-    by savedsearch_name
-| eval health=if(skipped>0, "Degraded", "Healthy")
-| sort - skipped
+index=_audit action=search info=completed
+    NOT user IN ("splunk-system-user")
+    NOT app IN (godaddy_health)
+| eval search_query=coalesce(search, search_string)
+| where match(search_query,"(?i)\|\s*(delete|collect|dboutput|script|sendemail)\b")
+| stats count by user, search_query
 ```
 
-### Platform Health Checks
+**4. GitHub-Style Heatmap Template (Day × Hour):**
 
 ```spl
-| Comprehensive Health Status
-| rest /services/server/health/splunkd
-| append [| rest /services/cluster/master/health]
-| append [| rest /services/shcluster/captain/health]
-| table splunk_server, health.overall, health.status
+| bin _time span=1h
+| eval hour=strftime(_time, "%H")
+| eval day=strftime(_time, "%A")
+| eval day_order=case(day="Monday", 1, day="Tuesday", 2, day="Wednesday", 3,
+    day="Thursday", 4, day="Friday", 5, day="Saturday", 6, day="Sunday", 7)
+| stats count as value by day, day_order, hour
+| appendpipe [| stats count
+    | eval day="Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    | makemv delim="," day | mvexpand day
+    | eval hour="00,01,02,...,23"
+    | makemv delim="," hour | mvexpand hour
+    | eval value=0
+    | eval day_order=case(day="Monday",1,...)]
+| stats max(value) as value, max(day_order) as day_order by day, hour
+| xyseries day hour display_value
+| sort day_order | fields - day_order
+| fillnull value="-"
 ```
+
+**5. CPU / Memory Utilization:**
+
+```spl
+index=_introspection component=Hostwide
+| eval cpu_pct=round('data.cpu_system_pct' + 'data.cpu_user_pct', 1)
+| eval mem_pct=round(('data.mem_used'/'data.mem')*100, 1)
+| stats avg(cpu_pct) as cpu_pct, avg(mem_pct) as mem_pct
+```
+
+**6. Queue Backpressure Monitoring:**
+
+```spl
+index=_internal source=*metrics.log group=queue
+    (name=parsingQueue OR name=indexQueue OR name=typingQueue)
+| eval fill_pct=if(max_size_kb>0, round((current_size_kb/max_size_kb)*100, 1), 0)
+| timechart span=5m avg(fill_pct) by name
+```
+
+### Appendix C — Design Standards Summary
+
+**Theme:** Dark (`theme="dark"`) — all dashboards  
+**Panel Layout:** Max 4 panels per row, HTML section headers  
+**Color Palette:** Green `#65a637`, Yellow `#f7bc38`, Red `#d93f3c`, Blue `#1e93ff`, Teal `#4ECDC4`  
+**Severity Pattern:** Emoji prefixes (`🔴 CRITICAL`, `🟡 ELEVATED`, `🟢 NORMAL`)  
+**Range Colors:** `["0x65a637","0xf7bc38","0xd93f3c"]` (ascending severity)  
+**Time Defaults:** `-4h@h` to `now` (most dashboards), `-24h@h` for overview  
+**Refresh:** Progress bar enabled on all panels
+
+### Appendix D — Quick Navigation
+
+| **Dashboard**      | **Access URL (relative)**                                     |
+| ------------------ | ------------------------------------------------------------- |
+| Executive Overview | `/app/<app_name>/assessment_executive_overview`               |
+| License & SVC      | `/app/<app_name>/assessment_license_consumption`              |
+| Search Performance | `/app/<app_name>/soc_search_performance_monitoring_dashboard` |
+| ES Health          | `/app/<app_name>/assessment_es_health`                        |
+| Access & RBAC      | `/app/<app_name>/assessment_access_rbac`                      |
+| Platform Health    | `/app/<app_name>/assessment_platform_health`                  |
+| Security Posture   | `/app/<app_name>/assessment_security_posture`                 |
 
 ---
 
-## 📎 Appendix B: Reference Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     SPLUNK CLOUD PLATFORM ARCHITECTURE                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                    DATA COLLECTION LAYER                         │   │
-│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────┐ │   │
-│  │  │ Universal  │  │   Heavy    │  │  Syslog-ng │  │    HEC    │ │   │
-│  │  │ Forwarders │  │ Forwarders │  │  Gateway   │  │ Endpoints │ │   │
-│  │  │  (1,200)   │  │    (8)     │  │    (2)     │  │  (Cloud)  │ │   │
-│  │  │  9.5 TB/d  │  │  3.2 TB/d  │  │  1.3 TB/d  │  │   APIs    │ │   │
-│  │  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └─────┬─────┘ │   │
-│  └────────┼───────────────┼───────────────┼───────────────┼────────┘   │
-│           │               │               │               │            │
-│           └───────────────┴───────────────┴───────────────┘            │
-│                                   │                                     │
-│                                   ▼                                     │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │              SPLUNK CLOUD MANAGED INFRASTRUCTURE                 │   │
-│  │  ┌───────────────────────────────────────────────────────────┐  │   │
-│  │  │                  INDEXER CLUSTER                          │  │   │
-│  │  │    (18-22 nodes, RF=3, SF=2, SmartStore-enabled)          │  │   │
-│  │  │    ┌─────────────────────────────────────────────────┐    │  │   │
-│  │  │    │ Hot: 3d │ Warm: 7d │ Cold: 90d │ Frozen: 7yr    │    │  │   │
-│  │  │    │ (NVMe)  │  (SSD)   │   (S3)    │   (S3/DDAA)    │    │  │   │
-│  │  │    └─────────────────────────────────────────────────┘    │  │   │
-│  │  └───────────────────────────────────────────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                   │                                     │
-│                                   ▼                                     │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                     SEARCH HEAD LAYER                            │   │
-│  │  ┌──────────────────────┐      ┌──────────────────────┐         │   │
-│  │  │  AD-HOC SH CLUSTER   │      │    ES SH CLUSTER     │         │   │
-│  │  │  (3 members)         │      │    (2 members)       │         │   │
-│  │  │  • 450 users         │      │    • 85 SOC analysts │         │   │
-│  │  │  • Dashboards        │      │    • 156 correlations│         │   │
-│  │  │  • Reports           │      │    • Threat detection│         │   │
-│  │  └──────────────────────┘      └──────────────────────┘         │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-**Document Classification:** Internal - Confidential  
-**Version:** 1.0  
-**Last Updated:** February 8, 2026  
-**Next Review:** May 8, 2026
+_Report Revision v2.0 — Generated February 11, 2026_  
+_Reflects all implemented assessment dashboards (7 dashboards, ~6,327 total XML lines, ~208 panels)_  
+_Next Scheduled Review: March 11, 2026_
